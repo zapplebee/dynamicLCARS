@@ -15,12 +15,12 @@ Create a scalabe LCARS interface that will respond to the height, width, and asp
 
 ####Already have:
 - SVG elements created for elbows
-- A basic CSS stylesheet to acomplish basic themeing
+- A CSS stylesheet to acomplish basic themeing
 - Webfont to match theme
 
 ####Need:
 - Make the page layout responsive
-- Basic CMS for page content
+- CMS for page content
 
 ####Want:
 - Intergration with the Wikipedia API to dynamically generate library entries.
