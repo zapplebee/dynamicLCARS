@@ -1,12 +1,12 @@
 dynamicLCARS
 ============
 
-A responsive LCARS template built with JQuery, CSS, and PHP based on Star Trek.
+A web-based responsive LCARS template built with JQuery, CSS, and PHP based on Star Trek.
 
 
 
 ###Objective
-Create a scalabe LCARS interface that will respond to the height, width, and aspect ratio of the viewport.
+Create a scalabe LCARS interface that will respond to the height, width, and aspect ratio of the browser viewport.
 
 ####Already have:
 - SVG elements created for elbows
