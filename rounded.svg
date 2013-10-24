@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" height="60">
+<g
+       class="rounded_button LCARS_color4"
+	   transform="translate(5,265),scale(2,2)"
+>
+    <path
+		class="left_arc"
+		d="m 15,0 c -8.284271,0 -15,6.7157 -15,15 0,8.2843 6.715729,15 15,15 l 0,-30 z"
+	/>
+    <path
+		class="right_arc"
+		d="m 60,0 c 8.284271,0 15,6.7157 15,15 0,8.2843 -6.715729,15 -15,15 l 0,-30 z"
+	/>
+	<rect
+		y="0" x="0" height="30" width="45"
+		class="box"
+		transform="translate(15,0),scale(1,1)"
+	/>
+	<rect
+		y="0" x="0" height="30" width="1"
+		class="scalar"
+		transform="translate(15,0),scale(0,1)"
+	/>
+	<text
+		class="LCARS_text"
+		y="27.5"
+		x="60"
+		transform="translate(0,0)"
+	>1701-A
+		</text>
+</g>
+</svg>
