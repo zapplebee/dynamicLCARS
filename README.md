@@ -19,7 +19,7 @@ Create a scalabe LCARS interface that will respond to the height, width, and asp
 - Webfont to match theme
 
 ####Need:
-- Make the page layout resposive
+- Make the page layout responsive
 - Basic CMS for page content
 
 ####Want:
