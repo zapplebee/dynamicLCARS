@@ -5,7 +5,9 @@ A web-based responsive LCARS template built with JQuery, CSS, and PHP based on S
 
 
 ![Preview](http://zacharyskalko.com/files/LCARS1.jpg "Preview")
-This is a preview of an early version. Currently built with **jquery.svg.js**. The DOM support is poor.
+This is a preview of an early version. Currently built with [jquery.svg.js](http://keith-wood.name/svg.html). The DOM support is poor.
+
+Currently the entire page is SVG. The objective of this project will be to reduce the SVG usage to only the [elbow elements](http://zacharyskalko.com/files/LCARS_ELBOW.jpg) unless it is possible to create them with pure CSS.
 
 
 ###Objective
