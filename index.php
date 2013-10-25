@@ -1,160 +1,16 @@
 <!DOCTYPE html>
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <meta name="viewport" content="width=1245">
-<style>
-@font-face {
-    font-family: 'lcarsregular';
-    src: url('fontface/lcars.eot');
-    src: url('fontface/lcars.eot?#iefix') format('embedded-opentype'),
-         url('fontface/lcars.woff') format('woff'),
-         url('fontface/lcars.ttf') format('truetype'),
-         url('fontface/lcars.svg#lcarsregular') format('svg');
-    font-weight: normal;
-    font-style: normal;
+<link rel="stylesheet" type="text/css" href="css/main.css">
+<script type="text/javascript" src="js/jquery-1.7.2.js"></script>
+<script type="text/javascript" src="js/jquery.svg.js"></script>
+<script type="text/javascript" src="js/jquery.svganim.js"></script>
+<script type="text/javascript" src="js/jquery.svgdom.js"></script>
+<script type="text/javascript" src="js/jquery.svgfilter.js"></script>
+<script type="text/javascript" src="js/jquery.svggraph.js"></script>
+<script type="text/javascript" src="js/jquery.svgplot.js"></script>
+<script type="text/javascript" src="js/svg.js"></script>
 
-}
-
-
-
-body, html, #svgContain{
-
-background-color: black;
-color: white;
-overflow: hidden;
-height: 100%;
-padding: 0px;
-margin: 0px;
-
-}
-
-#svgContain{
-position:absolute;
-top: 50%;
-left:50%;
-
-background-color: black;
-
-width:1245px;
-height:655px;
-margin-left: -622.5px;
-margin-top: -327.5px;
-
-}
-
-
-.main_body{
-position:absolute;
-top: 50%;
-left:50%;
-font-family: lcarsregular;
-line-height: 32.5px;
-font-size: 32px;
-text-align: center;
-overflow:hidden;
-width:615px;
-height:320px;
-margin-left: -152.5px;
-margin-top: -192.5px;
-color:#ff9900;
-z-index: -5;
-}
-
-
-svg{
-
-
-padding: 5px;
-width: 100%;
-height: 100%;
-z-index: 5;
-}
-
-
-/*BEGIN SVG STYLING*/
-
-	  svg path, svg rect{
-	  fill-opacity:1;
-	  stroke: none;
-
-	  
-	  }
-	
-.LCARS_color1{
-fill:#9999cc;
-}
-
-.LCARS_color2{
-fill:#9999ff;
-}
-
-.LCARS_color3{
-fill:#cc99cc;
-}
-
-.LCARS_color4{
-fill:#cc6699;
-}
-
-
-.LCARS_color5{
-fill:#cc6666;
-}
-
-
-.LCARS_color6{
-fill:#ff9966;
-}
-
-.LCARS_color7{
-fill:#ff9900;
-}
-
-.LCARS_color8{
-fill:#ffcc66;
-}
-
-.LCARS_highlight{
-fill:#ff9900;
-}
-
-.button{
-cursor:default;
-height: 60px;
-}
-
-.button text{
-fill: black;
-font-size:32px;
-font-family:lcarsregular;
--webkit-touch-callout: none;
--webkit-user-select: none;
--khtml-user-select: none;
--moz-user-select: -moz-none;
--ms-user-select: none;
-user-select: none;
-text-anchor:end;
-text-transform:uppercase;
-}
-
-.button image{
-
-}
-
-</style>
-
-  <script src="jquery-1.7.2.js"></script><style type="text/css"></style>
-
-
-  <script type="text/javascript" src="./index_files/jquery.svganim.js"></script>
-  
-  
-  <script type="text/javascript" src="jquery.svg.js"></script>
-  <script type="text/javascript" src="./index_files/jquery.svganim.js"></script>
-<script type="text/javascript" src="jquery.svgdom.js"></script>
-<script type="text/javascript" src="jquery.svgfilter.js"></script>
-<script type="text/javascript" src="jquery.svggraph.js"></script>
-<script type="text/javascript" src="jquery.svgplot.js"></script>
-<script type="text/javascript" src="svg.js"></script>
 
 <title>LCARS Control Panel</title>
 <script>
@@ -171,7 +27,7 @@ lcarsdata = new Make_LCARS_Button("halp");
 
 
 function holla(content){
-alert(content);
+//alert(content);
 };
 
 
@@ -333,12 +189,9 @@ $(window).resize(function() {
 
 });
 </script>
-
-
-
-
-
 </head>
+
+
 
 <body>
 <div id="svgContain">
