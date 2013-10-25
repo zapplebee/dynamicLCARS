@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<html>
+<head>
+<title>LCARS Control Panel</title>
 <meta name="viewport" content="width=1245">
 <link rel="stylesheet" type="text/css" href="css/main.css">
 <script type="text/javascript" src="js/jquery-1.7.2.js"></script>
@@ -11,8 +13,6 @@
 <script type="text/javascript" src="js/jquery.svgplot.js"></script>
 <script type="text/javascript" src="js/svg.js"></script>
 
-
-<title>LCARS Control Panel</title>
 <script>
 var Make_LCARS_Button = function(text){
 this.LCARSclass = "LCARS_color1";
@@ -144,40 +144,35 @@ $("#svgContain").svg('get').load(url, {addTo: true,
 
 $(window).load(function() {
 
-//$('svg').live('click', function() {
-//alert('clicked');
-//});
-
-alert(lcarsdata.alert);
-
-$("#svgContain").svg();
-//This is required to create the SVG canvas.
+	$("#svgContain").svg();
+	//This is required to create the SVG canvas.
 
 
-
-createLCARS("#layout");
-createLCARS("#constant_controls");
-if (document.location.hash !== ""){
-
-createLCARS(document.location.hash);
-} else {
-createLCARS("#home");
-}
+	createLCARS("#layout");
+	//Move through list #layout and create static LCARS decorative elements
+	createLCARS("#constant_controls");
+	//Move through list #constant_controls list and create permanent LCARS buttons
 
 
-$(window).on('hashchange', function() {
-var hash = document.location.hash;
-$(".button:not(.static)").remove();
-createLCARS(hash, 1);
+	if (document.location.hash !== ""){
+		createLCARS(document.location.hash);
+	} else {
+		createLCARS("#home");
+	}
 
-});
+
+	$(window).on('hashchange', function() {
+		var hash = document.location.hash;
+		$(".button:not(.static)").remove();
+		createLCARS(hash, 1);
+	});
 
 
-$(window).resize(function() {
-//when the window is resized, close the open button
-//	button_stretch_toggle($(window).data("openbutton"));
+	$(window).resize(function() {
+	//when the window is resized, close the open button
+	//	button_stretch_toggle($(window).data("openbutton"));
 		
-});
+	});
 
     $("html").bind("mousewheel", function() {
 	//disable the mousewheel
