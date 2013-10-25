@@ -1,0 +1,6 @@
+[submodule "outside/jquery"]
+	path = outside/jquery
+	url = https://github.com/jquery/jquery.git
+[submodule "outside/jquerysvg"]
+	path = outside/jquerysvg
+	url = https://github.com/smparkes/jquery.svg.git
