@@ -6,11 +6,11 @@ in 'test.html' you will find a test elbow.
 
 ####Checklist
 
--create rounded buttons
+- create rounded buttons
 
--create rectangle buttons
+- create rectangle buttons
 
--grid system for elements
+- grid system for elements
 
 ####Issues
-While hovering the ::after shape the background color of the main div changes.
+- While hovering the ::after shape the background color of the main div changes.
