@@ -22,7 +22,6 @@ this.alert = "A button";
 this.text = text;
 }
 
-lcarsdata = new Make_LCARS_Button("halp");
 
 
 
