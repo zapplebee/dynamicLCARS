@@ -1,0 +1,183 @@
+
+@font-face {
+    font-family: 'lcarsregular';
+    src: url('css/fontface/lcars.eot');
+    src: url('css/fontface/lcars.eot?#iefix') format('embedded-opentype'),
+         url('css/fontface/lcars.woff') format('woff'),
+         url('css/fontface/lcars.ttf') format('truetype'),
+         url('css/fontface/lcars.svg#lcarsregular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+html{
+cursor: pointer;
+}
+
+#container{
+
+position:absolute;
+top: 50%;
+left:50%;
+width:1245px;
+height:655px;
+margin-left: -622.5px;
+margin-top: -327.5px;
+
+}
+
+body{
+font-family: lcarsregular;
+background-color: black;
+line-height: 26px;
+font-size: 32px;
+}
+
+
+/*LEFT TOP ELBOW*/
+
+div.left-elbow {
+
+left: 0%;
+top: 0%;
+padding: 0px;
+border-top-left-radius:75px;
+}
+
+div.left-elbow::after{
+top: 30px;
+left: 150px;
+}
+
+
+
+.left-elbow a{
+
+padding-right: 318px;
+
+}
+
+
+/*RIGHT TOP ELBOW*/
+div.right-elbow {
+right: 0%;
+top: 0%;
+border-top-right-radius:75px;
+	}
+
+div.right-elbow::after{
+    top: 30px;
+    right: 150px;
+
+	}
+
+
+
+.right-elbow a{
+
+padding-left: 318px;
+padding-right: 5px;
+}
+
+
+
+
+
+/*RIGHT BOTTOM ELBOW*/
+
+
+div.right-bottom-elbow {
+
+
+
+
+right: 0%;
+bottom: 0%;
+border-bottom-right-radius:75px;
+
+	}
+
+div.right-bottom-elbow::after{
+    bottom: 30px;
+    right: 150px;
+}
+
+
+
+.right-bottom-elbow a{
+
+padding-left: 318px;
+padding-right: 5px;
+padding-bottom: 58px;
+}
+
+/*LEFT BOTTOM ELBOW*/
+
+
+
+div.left-bottom-elbow {
+
+left: 0%;
+bottom: 0%;
+border-bottom-left-radius:75px;
+
+	}
+
+div.left-bottom-elbow::after{
+    bottom: 30px;
+    left: 150px;
+}
+
+
+.left-bottom-elbow a{
+padding-right: 318px;
+padding-bottom: 58px;
+}
+
+
+
+
+div.left-elbow, div.right-elbow, div.right-bottom-elbow, div.left-bottom-elbow{
+-webkit-touch-callout: none;
+-webkit-user-select: none;
+-khtml-user-select: none;
+-moz-user-select: none;
+-ms-user-select: none;
+user-select: none;
+margin: 0px;
+display: table;
+width: 463px;
+height: 96px;
+position: absolute;
+text-align: right;
+overflow: hidden;
+}
+
+
+div.left-elbow::after, div.right-elbow::after, div.right-bottom-elbow::after, div.left-bottom-elbow::after{
+content: '';
+position: absolute;
+background-color: black;
+	width: 200%;
+	height: 200%;
+    border-radius: 37.5px;
+}
+
+
+.left-elbow a, .right-elbow a, .right-bottom-elbow a, .left-bottom-elbow a{
+
+color: black;
+display: table-cell;
+vertical-align: bottom;
+height: 100%;
+margin: 0px;
+background-color: #ffcc66;
+text-decoration: none;
+}
+
+.left-elbow a:hover, .right-elbow a:hover, .right-bottom-elbow a:hover, .left-bottom-elbow a:hover{
+background-color: red;
+
+}
+
