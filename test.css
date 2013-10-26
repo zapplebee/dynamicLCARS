@@ -16,15 +16,13 @@ cursor: pointer;
 }
 
 #container{
-
 position:absolute;
 top: 50%;
 left:50%;
 width:1245px;
-height:655px;
+height:300px;
 margin-left: -622.5px;
 margin-top: -327.5px;
-
 }
 
 body{
@@ -38,10 +36,8 @@ font-size: 32px;
 /*LEFT TOP ELBOW*/
 
 div.left-elbow {
-
 left: 0%;
 top: 0%;
-padding: 0px;
 border-top-left-radius:75px;
 }
 
@@ -51,11 +47,8 @@ left: 150px;
 }
 
 
-
 .left-elbow a{
-
 padding-right: 318px;
-
 }
 
 
@@ -88,14 +81,9 @@ padding-right: 5px;
 
 
 div.right-bottom-elbow {
-
-
-
-
 right: 0%;
 bottom: 0%;
 border-bottom-right-radius:75px;
-
 	}
 
 div.right-bottom-elbow::after{
@@ -106,7 +94,6 @@ div.right-bottom-elbow::after{
 
 
 .right-bottom-elbow a{
-
 padding-left: 318px;
 padding-right: 5px;
 padding-bottom: 58px;
@@ -147,7 +134,7 @@ div.left-elbow, div.right-elbow, div.right-bottom-elbow, div.left-bottom-elbow{
 user-select: none;
 margin: 0px;
 display: table;
-width: 463px;
+width: 462px;
 height: 96px;
 position: absolute;
 text-align: right;
