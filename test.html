@@ -18,69 +18,266 @@ html{
 cursor: pointer;
 }
 
+#container{
+
+position:absolute;
+top: 50%;
+left:50%;
+
+background-color: black;
+
+width:1245px;
+height:655px;
+margin-left: -622.5px;
+margin-top: -327.5px;
+
+}
+
 body{
 
 font-family: lcarsregular;
 background-color: black;
-display: table;
+
 line-height: 32px;
 font-size: 32px;
 }
 
-span{
-display: table-row;
-}
-
-div {
-margin: 2.5px;
+div.left-elbow {
+margin: 0px;
 -webkit-touch-callout: none;
 -webkit-user-select: none;
 -khtml-user-select: none;
 -moz-user-select: none;
 -ms-user-select: none;
 user-select: none;
-display: table-cell;
-width: 145px;
-height: 161px;
-position: relative;
-background-color: #9999cc;
+display: table;
+width: 463px;
+height: 96px;
+position: absolute;
 left: 0%;
 top: 0%;
-padding-right: 318px;
+padding: 0px;
 border-top-left-radius:75px;
-	vertical-align: bottom;
-	text-align: right;
-	overflow: hidden;}
+vertical-align: bottom;
+text-align: right;
+overflow: hidden;
+}
 
-div::after{
+div.left-elbow::after{
 content: '';
+position: absolute;
+top: 30px;
+background-color: black;
+left: 150px;
+width: 200%;
+height: 200%;
+border-radius: 37.5px;	
+}
 
+.left-elbow a:hover{
+background-color: red;
+
+}
+
+.left-elbow a{
+color: black;
+display: table-cell;
+vertical-align: bottom;
+height: 100%;
+padding-right: 318px;
+margin: 0px;
+background-color: #ffcc66;
+text-decoration: none;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+div.right-elbow {
+margin: 0px;
+-webkit-touch-callout: none;
+-webkit-user-select: none;
+-khtml-user-select: none;
+-moz-user-select: none;
+-ms-user-select: none;
+user-select: none;
+display: table;
+width: 463px;
+height: 161px;
+position: absolute;
+right: 0%;
+top: 0%;
+padding: 0px;
+border-top-right-radius:75px;
+vertical-align: bottom;
+text-align: right;
+overflow: hidden;
+	}
+
+div.right-elbow::after{
+	content: '';
     position: absolute;
     top: 30px;
 	background-color: black;
-    left: 150px;
-	width: 100%;
-	height: 100%;
+    right: 150px;
+	width: 200%;
+	height: 200%;
+    border-radius: 37.5px;
+	}
+
+.right-elbow a:hover{
+background-color: red;
+
+}
+
+.right-elbow a{
+color: black;
+display: table-cell;
+vertical-align: bottom;
+height: 100%;
+padding-left: 318px;
+padding-right: 5px;
+margin: 0px;
+background-color: #ffcc66;
+text-decoration: none;
+}
+
+
+
+
+
+
+
+
+div.right-bottom-elbow {
+margin: 0px;
+-webkit-touch-callout: none;
+-webkit-user-select: none;
+-khtml-user-select: none;
+-moz-user-select: none;
+-ms-user-select: none;
+user-select: none;
+display: table;
+width: 463px;
+height: 161px;
+position: absolute;
+right: 0%;
+bottom: 0%;
+padding: 0px;
+border-bottom-right-radius:75px;
+vertical-align: bottom;
+text-align: right;
+overflow: hidden;
+	}
+
+div.right-bottom-elbow::after{
+content: '';
+
+    position: absolute;
+    bottom: 30px;
+	background-color: black;
+    right: 150px;
+	width: 200%;
+	height: 200%;
     border-radius: 37.5px;
 
 	
 }
 
-div:hover{
+.right-bottom-elbow a:hover{
 background-color: red;
 
+}
+
+.right-bottom-elbow a{
+color: black;
+display: table-cell;
+vertical-align: bottom;
+height: 100%;
+padding-left: 318px;
+padding-right: 5px;
+margin: 0px;
+background-color: #ffcc66;
+text-decoration: none;
+padding-bottom: 58px;
+}
+
+
+
+
+
+
+
+
+
+div.left-bottom-elbow {
+margin: 0px;
+-webkit-touch-callout: none;
+-webkit-user-select: none;
+-khtml-user-select: none;
+-moz-user-select: none;
+-ms-user-select: none;
+user-select: none;
+display: table;
+width: 463px;
+height: 161px;
+position: absolute;
+left: 0%;
+bottom: 0%;
+padding: 0px;
+border-bottom-left-radius:75px;
+vertical-align: bottom;
+text-align: right;
+overflow: hidden;
+	}
+
+div.left-bottom-elbow::after{
+content: '';
+
+    position: absolute;
+    bottom: 30px;
+	background-color: black;
+    left: 150px;
+	width: 200%;
+	height: 200%;
+    border-radius: 37.5px;
+
+	
+}
+
+.left-bottom-elbow a:hover{
+background-color: red;
+
+}
+
+.left-bottom-elbow a{
+color: black;
+display: table-cell;
+vertical-align: bottom;
+height: 100%;
+padding-right: 318px;
+margin: 0px;
+background-color: #ffcc66;
+text-decoration: none;
+padding-bottom: 58px;
 }
 
 
 </style>
 <body>
-<span>
-<div>
-TEST
+<div id="container">
+<div class="left-elbow"><a href="#">TEST</a></div>
+<div class="right-elbow"><a href="#">TEST</a></div>
+<div class="right-bottom-elbow"><a href="#">TEST</a></div>
+<div class="left-bottom-elbow"><a href="#">TEST</a></div>
 </div>
-<div>
-TEST
-</div>
-</span>
 </body>
 </html>
