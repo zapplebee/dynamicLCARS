@@ -1,32 +1,24 @@
-dynamicLCARS
-============
+# dynamicLCARS
 
-A web-based responsive LCARS template built with JQuery, CSS, and PHP based on Star Trek.
+This branch revives the original LCARS experiment as a React app.
 
+The legacy project used PHP to emit SVG fragments and jQuery plugins to animate them. The new app keeps the original LCARS font, palette, corner geometry, and fixed 1245 x 655 composition, but rebuilds the interface with reusable React components and modern CSS layout.
 
-![Preview](http://zacharyskalko.com/files/LCARS1.jpg "Preview")
-This is a preview of an early version. Currently built with [jquery.svg.js](http://keith-wood.name/svg.html). The DOM support is poor.
+## Run
 
-Currently the entire page is SVG. The objective of this project will be to reduce the SVG usage to only the [elbow elements](http://zacharyskalko.com/files/LCARS_ELBOW.jpg) unless it is possible to create them with pure CSS.
+```bash
+npm install
+npm run dev
+```
 
+## Build
 
-###Objective
-Create a scalabe LCARS interface that will respond to the height, width, and aspect ratio of the browser viewport.
+```bash
+npm run build
+```
 
-####Already have:
-- SVG elements created for elbows
-- A CSS stylesheet to acomplish basic themeing
-- Webfont to match theme
+## Notes
 
-####Need:
-- Make the page layout responsive
-- CMS for page content
-
-####Want:
-- Intergration with the Wikipedia API to dynamically generate library entries.
-
-####Would be nice:
-- A custom media player skin in HTML 5 to match the theme
-
-####Resources
-[Basic LCARS design rules](http://www.lcars47.com/p/lcars-101.html)
+- `index.php` and `svg.php` are still present as the original implementation for reference.
+- The React source lives in [`src`](./src).
+- The LCARS webfont is reused from [`css/fontface`](./css/fontface).
