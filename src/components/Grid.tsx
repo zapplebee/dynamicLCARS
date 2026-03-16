@@ -10,7 +10,6 @@ type GridProps = {
 function Grid({ width, height, children }: GridProps) {
   return (
     <main className="lcars-shell">
-      <div className="lcars-stage" style={{ width: `${width}px`, height: `${height}px` }}>
         <div
           className="lcars-stage-grid"
           style={{
@@ -24,7 +23,6 @@ function Grid({ width, height, children }: GridProps) {
         >
           {children}
         </div>
-      </div>
     </main>
   );
 }
