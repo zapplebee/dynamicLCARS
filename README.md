@@ -7,14 +7,14 @@ The legacy project used PHP to emit SVG fragments and jQuery plugins to animate 
 ## Run
 
 ```bash
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 ## Build
 
 ```bash
-npm run build
+bun run build
 ```
 
 ## Notes

@@ -1,0 +1,12 @@
+{
+  "remote.autoForwardPorts": true,
+  "remote.forwardOnOpen": true,
+  "remote.portsAttributes": {
+    "5173": {
+      "label": "Vite dev server",
+      "onAutoForward": "openPreview",
+      "protocol": "http",
+      "requireLocalPort": true
+    }
+  }
+}
