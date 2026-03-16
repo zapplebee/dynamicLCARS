@@ -14,6 +14,8 @@ type ButtonProps = {
   gridWidth?: number;
   gridHeight?: number;
   active?: boolean;
+  onClick?: () => void;
+  disabled?: boolean;
   children?: ReactNode;
 };
 
@@ -23,10 +25,13 @@ function Button({
   gridWidth = 1,
   gridHeight = 1,
   active = false,
+  onClick,
+  disabled = false,
   children,
 }: ButtonProps) {
   const tone = active ? BUTTON_COLORS.color7 : BUTTON_COLORS[color];
-  const className = `lcars-button ${shape === "rounded" ? "lcars-button--rounded" : "lcars-button--rect"}`;
+  const clickable = typeof onClick === "function" && !disabled;
+  const className = `lcars-button ${shape === "rounded" ? "lcars-button--rounded" : "lcars-button--rect"}${clickable ? " lcars-button--interactive" : ""}`;
   const style: CSSProperties = {
     gridColumn: `span ${gridWidth}`,
     gridRow: `span ${gridHeight}`,
@@ -34,20 +39,30 @@ function Button({
     fontSize: `${LABEL_FONT_SIZE}px`,
   };
 
+  const label = children ? (
+    <span
+      className="lcars-button__label"
+      style={{
+        right: `${LABEL_RIGHT[shape]}px`,
+        bottom: `${LABEL_BOTTOM}px`,
+        transform: `scaleX(${LABEL_SCALE_X})`,
+      }}
+    >
+      {children}
+    </span>
+  ) : null;
+
+  if (clickable) {
+    return (
+      <button type="button" className={className} style={style} onClick={onClick}>
+        {label}
+      </button>
+    );
+  }
+
   return (
-    <div className={className} style={style}>
-      {children ? (
-        <span
-          className="lcars-button__label"
-          style={{
-            right: `${LABEL_RIGHT[shape]}px`,
-            bottom: `${LABEL_BOTTOM}px`,
-            transform: `scaleX(${LABEL_SCALE_X})`,
-          }}
-        >
-          {children}
-        </span>
-      ) : null}
+    <div className={className} style={style} aria-disabled={disabled}>
+      {label}
     </div>
   );
 }

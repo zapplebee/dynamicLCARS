@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:api": "bun run server/index.ts",
+    "dev:wetty": "test -n \"$WETTY_SSH_PASS\" && docker run --rm -p 3001:3000 -v \"$PWD/ops/wetty:/wetty-config:ro\" -e WETTY_SSH_PASS --entrypoint sh wettyoss/wetty -lc 'NODE_ENV=production node . --host 0.0.0.0 --port 3000 --base /wetty --allow-iframe --ssh-host lcars-nyx --ssh-user zac --ssh-config /wetty-config/config --ssh-pass \"$WETTY_SSH_PASS\"'",
     "build": "vite build",
     "preview": "vite preview"
   },

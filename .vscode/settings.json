@@ -7,6 +7,16 @@
       "onAutoForward": "openPreview",
       "protocol": "http",
       "requireLocalPort": true
+    },
+    "3001": {
+      "label": "WeTTY terminal service",
+      "protocol": "http",
+      "requireLocalPort": true
+    },
+    "3002": {
+      "label": "LCARS tmux bridge",
+      "protocol": "http",
+      "requireLocalPort": true
     }
   }
 }

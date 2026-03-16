@@ -22,6 +22,59 @@
         "panel": "dedicated",
         "clear": false
       }
+    },
+    {
+      "label": "dev: api",
+      "type": "shell",
+      "command": "bun run dev:api",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "custom",
+        "pattern": {
+          "regexp": "."
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^LCARS tmux bridge",
+          "endsPattern": "http://"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": false
+      }
+    },
+    {
+      "label": "dev: wetty",
+      "type": "shell",
+      "command": "bun run dev:wetty",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "custom",
+        "pattern": {
+          "regexp": "."
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^",
+          "endsPattern": "http://"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": false
+      }
+    },
+    {
+      "label": "dev: lcars",
+      "dependsOn": [
+        "dev: api",
+        "dev: wetty",
+        "dev: vite"
+      ],
+      "dependsOrder": "parallel"
     }
   ]
 }

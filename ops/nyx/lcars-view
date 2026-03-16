@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+selected_file="${HOME}/.lcars-selected-session"
+tty_file="${HOME}/.lcars-view-tty"
+
+mapfile -t sessions < <(tmux list-sessions -F '#{session_name}' 2>/dev/null | sort)
+
+if [ "${#sessions[@]}" -eq 0 ]; then
+  printf 'No tmux sessions are available on this host.\n'
+  exec "${SHELL:-/bin/bash}" -l
+fi
+
+selected=""
+
+if [ -f "$selected_file" ]; then
+  selected="$(head -n 1 "$selected_file" | tr -d '\r')"
+fi
+
+if ! printf '%s\n' "${sessions[@]}" | grep -Fx -- "$selected" >/dev/null 2>&1; then
+  selected="${sessions[0]}"
+  printf '%s\n' "$selected" > "$selected_file"
+fi
+
+printf '%s\n' "${SSH_TTY:-$(tty)}" > "$tty_file"
+trap 'rm -f "$tty_file"' EXIT
+
+exec tmux attach-session -t "$selected"
