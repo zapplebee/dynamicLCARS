@@ -2,10 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Commands from "./Commands";
 import Button from "./Button";
 
-const VISIBLE_SESSION_COUNT = 6;
+const IDLE_THRESHOLD_SECONDS = 30;
+
+type SessionSummary = {
+  name: string;
+  idleSeconds: number;
+};
 
 type SessionsResponse = {
-  sessions: string[];
+  sessions: SessionSummary[];
 };
 
 type CurrentResponse = {
@@ -16,19 +21,13 @@ type SelectResponse = {
   currentSession: string;
 };
 
-function padSessions(sessions: string[]) {
-  const padded = [...sessions];
+type SessionCommandsProps = {
+  currentSession: string | null;
+  onCurrentSessionChange: (session: string | null) => void;
+};
 
-  while (padded.length < VISIBLE_SESSION_COUNT) {
-    padded.push("");
-  }
-
-  return padded.slice(0, VISIBLE_SESSION_COUNT);
-}
-
-function SessionCommands() {
-  const [sessions, setSessions] = useState<string[]>([]);
-  const [currentSession, setCurrentSession] = useState<string | null>(null);
+function SessionCommands({ currentSession, onCurrentSessionChange }: SessionCommandsProps) {
+  const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [pendingSession, setPendingSession] = useState<string | null>(null);
@@ -51,8 +50,8 @@ function SessionCommands() {
       const sessionsData = (await sessionsResponse.json()) as SessionsResponse;
       const currentData = (await currentResponse.json()) as CurrentResponse;
 
-      setSessions(sessionsData.sessions.slice(0, VISIBLE_SESSION_COUNT));
-      setCurrentSession(currentData.currentSession);
+      setSessions(sessionsData.sessions);
+      onCurrentSessionChange(currentData.currentSession);
       setError(null);
     } catch (loadError) {
       const message = loadError instanceof Error ? loadError.message : "Unable to reach nyx tmux bridge.";
@@ -60,7 +59,7 @@ function SessionCommands() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [onCurrentSessionChange]);
 
   useEffect(() => {
     void loadState(true);
@@ -91,7 +90,7 @@ function SessionCommands() {
       }
 
       const data = (await response.json()) as SelectResponse;
-      setCurrentSession(data.currentSession);
+      onCurrentSessionChange(data.currentSession);
       setError(null);
       await loadState(false);
     } catch (selectError) {
@@ -100,54 +99,56 @@ function SessionCommands() {
     } finally {
       setPendingSession(null);
     }
-  }, [loadState]);
+  }, [loadState, onCurrentSessionChange]);
 
   const activeSession = useMemo(() => {
     if (!currentSession) {
       return null;
     }
 
-    return sessions.includes(currentSession) ? currentSession : null;
+    return sessions.some((session) => session.name === currentSession) ? currentSession : null;
   }, [currentSession, sessions]);
 
-  const sessionSlots = useMemo(() => {
+  const statusLabel = useMemo(() => {
     if (error && sessions.length === 0) {
-      return ["OFFLINE", ...Array.from({ length: VISIBLE_SESSION_COUNT - 1 }, () => "")];
+      return "OFFLINE";
     }
 
     if (loading && sessions.length === 0) {
-      return ["SYNCING", ...Array.from({ length: VISIBLE_SESSION_COUNT - 1 }, () => "")];
+      return "SYNCING";
     }
 
     if (sessions.length === 0) {
-      return ["NO TMUX", ...Array.from({ length: VISIBLE_SESSION_COUNT - 1 }, () => "")];
+      return "NO TMUX";
     }
 
-    return padSessions(sessions);
+    return null;
   }, [error, loading, sessions]);
 
   return (
-    <Commands>
-      {sessionSlots.map((sessionLabel, index) => {
-        const isVisibleSession = sessionLabel !== "" && sessions.includes(sessionLabel);
-        const isPending = pendingSession === sessionLabel;
-        const isActive = isVisibleSession && activeSession === sessionLabel;
-        const color = sessionLabel === "OFFLINE"
-          ? "color5"
-          : sessionLabel === "SYNCING" || sessionLabel === "NO TMUX" || !isVisibleSession
-            ? "color8"
-            : "color1";
+    <Commands side="right">
+      {statusLabel ? (
+        <Button shape="rect" color={statusLabel === "OFFLINE" ? "color5" : "color8"}>
+          {statusLabel}
+        </Button>
+      ) : null}
+
+      {sessions.map((session) => {
+        const isPending = pendingSession === session.name;
+        const isActive = activeSession === session.name;
+        const isIdle = session.idleSeconds > IDLE_THRESHOLD_SECONDS;
+        const color = isIdle ? "color6" : "color1";
 
         return (
           <Button
-            key={`${sessionLabel || "empty"}-${index}`}
+            key={session.name}
             shape="rect"
             color={color}
             active={isActive}
-            onClick={isVisibleSession ? () => void selectSession(sessionLabel) : undefined}
+            onClick={() => void selectSession(session.name)}
             disabled={isPending}
           >
-            {sessionLabel}
+            {session.name}
           </Button>
         );
       })}

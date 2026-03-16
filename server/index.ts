@@ -5,10 +5,14 @@ const SSH_PASSWORD = Bun.env.TMUX_SSH_PASS ?? Bun.env.WETTY_SSH_PASS ?? "";
 const SSH_ASKPASS = new URL("../ops/ssh/askpass.sh", import.meta.url).pathname;
 const SELECTED_SESSION_FILE = "${HOME}/.lcars-selected-session";
 const VIEW_TTY_FILE = "${HOME}/.lcars-view-tty";
-const MAX_VISIBLE_SESSIONS = 6;
+
+type SessionSummary = {
+  name: string;
+  idleSeconds: number;
+};
 
 type SessionListResponse = {
-  sessions: string[];
+  sessions: SessionSummary[];
 };
 
 type CurrentSessionResponse = {
@@ -75,13 +79,23 @@ async function runRemote(command: string) {
 }
 
 async function listAllSessions() {
-  const output = await runRemote("tmux list-sessions -F '#{session_name}' 2>/dev/null || true");
+  const output = await runRemote("tmux list-sessions -F '#{session_name}\t#{session_activity}' 2>/dev/null || true");
+  const nowInSeconds = Math.floor(Date.now() / 1000);
 
   return output
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
-    .sort((left, right) => left.localeCompare(right));
+    .map((line) => {
+      const [name, activityRaw] = line.split("\t");
+      const activity = Number(activityRaw);
+
+      return {
+        name,
+        idleSeconds: Number.isFinite(activity) && activity > 0 ? Math.max(0, nowInSeconds - activity) : Number.MAX_SAFE_INTEGER,
+      } satisfies SessionSummary;
+    })
+    .sort((left, right) => left.name.localeCompare(right.name));
 }
 
 async function getCurrentSession() {
@@ -93,7 +107,7 @@ async function getCurrentSession() {
   }
 
   const sessions = await listAllSessions();
-  return sessions.includes(current) ? current : null;
+  return sessions.some((session) => session.name === current) ? current : null;
 }
 
 async function setSelectedSession(session: string) {
@@ -115,7 +129,7 @@ async function setSelectedSession(session: string) {
 async function handleSessions() {
   const sessions = await listAllSessions();
   const body: SessionListResponse = {
-    sessions: sessions.slice(0, MAX_VISIBLE_SESSIONS),
+    sessions,
   };
 
   return json(body);
@@ -140,7 +154,7 @@ async function handleSelect(request: Request) {
 
   const sessions = await listAllSessions();
 
-  if (!sessions.includes(session)) {
+  if (!sessions.some((entry) => entry.name === session)) {
     return json({ error: "Unknown tmux session." }, 404);
   }
 

@@ -1,44 +1,16 @@
-import { useCallback, useEffect, useState } from "react";
-import Button from "./components/Button";
+import { useState } from "react";
 import Elbow from "./components/Elbow";
 import Grid from "./components/Grid";
+import MainView from "./components/MainView";
 import Matrix from "./components/Matrix";
 import Pane from "./components/Pane";
 import SessionCommands from "./components/SessionCommands";
-import Tabs from "./components/Tabs";
-import TerminalPane from "./components/TerminalPane";
+import ToolCommands, { type ToolRoute } from "./components/ToolCommands";
 import { STAGE_HEIGHT, STAGE_WIDTH } from "./theme";
 
 function App() {
-  const [isFullscreen, setIsFullscreen] = useState(false);
-
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(document.fullscreenElement !== null);
-    };
-
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    handleFullscreenChange();
-
-    return () => {
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-    };
-  }, []);
-
-  const toggleFullscreen = useCallback(async () => {
-    const shell = document.querySelector(".lcars-shell");
-
-    if (!(shell instanceof HTMLElement)) {
-      return;
-    }
-
-    if (document.fullscreenElement) {
-      await document.exitFullscreen();
-      return;
-    }
-
-    await shell.requestFullscreen();
-  }, []);
+  const [selectedTool, setSelectedTool] = useState<ToolRoute>("shell");
+  const [selectedSession, setSelectedSession] = useState<string | null>(null);
 
   return (
     <Grid width={STAGE_WIDTH} height={STAGE_HEIGHT}>
@@ -47,33 +19,15 @@ function App() {
       <Elbow corner="bottomLeft" color="color8" />
       <Elbow corner="bottomRight" color="color8" />
 
-      <Tabs>
-        <Button shape="rect" color="color3">HOME</Button>
-        <Button shape="rect" color="color3">BRIEFING</Button>
-        <Button shape="rect" color="color3" active>SUBSPACE</Button>
-        <Button shape="rect" color="color3">OFFICERS</Button>
-        <Button shape="rect" color="color3" gridHeight={2}>ABOUT</Button>
-        <Button shape="rect" color="color3" onClick={() => void toggleFullscreen()} active={isFullscreen}>
-          FULLSCREEN
-        </Button>
-      </Tabs>
+      <ToolCommands selectedTool={selectedTool} onSelectTool={setSelectedTool} />
 
       <Matrix>
         <Pane gridWidth={8} gridHeight={11}>
-          <TerminalPane />
+          <MainView selectedTool={selectedTool} selectedSession={selectedSession} />
         </Pane>
-
-        <Button shape="rounded" color="color2">C1</Button>
-        <Button shape="rounded" color="color3">C2</Button>
-        <Button shape="rounded" color="color4">C3</Button>
-        <Button shape="rounded" color="color6">C4</Button>
-        <Button shape="rounded" color="color1">C5</Button>
-        <Button shape="rounded" color="color2">C6</Button>
-        <Button shape="rounded" color="color3">C7</Button>
-        <Button shape="rounded" color="color4">C8</Button>
       </Matrix>
 
-      <SessionCommands />
+      <SessionCommands currentSession={selectedSession} onCurrentSessionChange={setSelectedSession} />
     </Grid>
   );
 }

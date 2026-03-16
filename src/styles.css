@@ -39,7 +39,6 @@ body {
   overflow: visible;
 }
 
-.lcars-tabs,
 .lcars-commands,
 .lcars-matrix {
   display: grid;
@@ -47,16 +46,20 @@ body {
   overflow: visible;
 }
 
-.lcars-tabs {
+.lcars-commands--left {
   grid-column: 1;
-  grid-row: 2 / span 7;
+  grid-row: 2 / span 10;
   grid-auto-rows: 60px;
+  align-content: start;
 }
 
-.lcars-commands {
+.lcars-commands--right {
   grid-column: 10;
-  grid-row: 2 / span 6;
+  grid-row: 2 / span 10;
   grid-auto-rows: 60px;
+  align-content: start;
+  overflow-y: auto;
+  padding-right: 2px;
 }
 
 .lcars-matrix {
@@ -141,14 +144,106 @@ body {
   flex: 1;
   min-width: 0;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(circle at top left, rgba(255, 204, 102, 0.18), transparent 28%),
+    linear-gradient(180deg, rgba(22, 16, 38, 0.96), rgba(4, 6, 15, 0.98));
+}
+
+.lcars-terminal-pane__chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 22px 12px;
+  font-family: "lcarsregular", sans-serif;
+  color: #ffcc66;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.lcars-terminal-pane__label {
+  font-size: 24px;
+}
+
+.lcars-terminal-pane__session {
+  font-size: 18px;
+  color: #ffd98f;
 }
 
 .lcars-terminal-pane__frame {
   display: block;
   width: 100%;
-  height: 100%;
+  flex: 1;
   border: 0;
   background: transparent;
+}
+
+.lcars-route-panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+  padding: 48px;
+  color: #f7d89c;
+  background:
+    radial-gradient(circle at top left, rgba(255, 153, 102, 0.22), transparent 26%),
+    linear-gradient(135deg, #1b1630 0%, #091019 58%, #04070d 100%);
+}
+
+.lcars-route-panel__eyebrow,
+.lcars-route-panel__title,
+.lcars-route-panel__detail,
+.lcars-route-panel__status-label,
+.lcars-route-panel__status-value {
+  margin: 0;
+}
+
+.lcars-route-panel__eyebrow,
+.lcars-route-panel__title {
+  font-family: "lcarsregular", sans-serif;
+  text-transform: uppercase;
+}
+
+.lcars-route-panel__eyebrow {
+  font-size: 22px;
+  color: #ffcc66;
+}
+
+.lcars-route-panel__title {
+  font-size: 72px;
+  line-height: 0.9;
+}
+
+.lcars-route-panel__detail {
+  max-width: 640px;
+  font-family: "Trebuchet MS", sans-serif;
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.lcars-route-panel__status {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 8px;
+  width: fit-content;
+  padding: 18px 22px;
+  border-radius: 24px;
+  background: rgba(255, 204, 102, 0.14);
+}
+
+.lcars-route-panel__status-label {
+  font-family: "lcarsregular", sans-serif;
+  font-size: 20px;
+  color: #ffcc66;
+  text-transform: uppercase;
+}
+
+.lcars-route-panel__status-value {
+  font-family: "Trebuchet MS", sans-serif;
+  font-size: 22px;
 }
 
 .lcars-button--rounded {
