@@ -86,12 +86,12 @@ body {
 
 .lcars-elbow--bottomLeft {
   grid-column: 1;
-  grid-row: 10;
+  grid-row: 9;
 }
 
 .lcars-elbow--bottomRight {
   grid-column: 8;
-  grid-row: 10;
+  grid-row: 9;
 }
 
 .lcars-elbow svg {
