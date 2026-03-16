@@ -23,61 +23,61 @@ function App() {
       </Tabs>
 
       <Matrix>
-        <Button shape="rounded" color="color1">R2 C2</Button>
-        <Button shape="rounded" color="color2">R2 C3</Button>
-        <Button shape="rounded" color="color3">R2 C4</Button>
-        <Button shape="rounded" color="color4">R2 C5</Button>
-        <Button shape="rounded" color="color6">R2 C6</Button>
-        <Button shape="rounded" color="color1">R2 C7</Button>
+        <Button shape="rounded" color="color1">R1 C1</Button>
+        <Button shape="rounded" color="color2">R1 C2</Button>
+        <Button shape="rounded" color="color3">R1 C3</Button>
+        <Button shape="rounded" color="color4">R1 C4</Button>
+        <Button shape="rounded" color="color6">R1 C5</Button>
+        <Button shape="rounded" color="color1">R1 C6</Button>
 
-        <Button shape="rounded" color="color2">R3 C2</Button>
-        <Button shape="rounded" color="color3">R3 C3</Button>
-        <Button shape="rounded" color="color4">R3 C4</Button>
-        <Button shape="rounded" color="color6">R3 C5</Button>
-        <Button shape="rounded" color="color1">R3 C6</Button>
-        <Button shape="rounded" color="color2">R3 C7</Button>
+        <Button shape="rounded" color="color2">R2 C1</Button>
+        <Button shape="rounded" color="color3">R2 C2</Button>
+        <Button shape="rounded" color="color4">R2 C3</Button>
+        <Button shape="rounded" color="color6">R2 C4</Button>
+        <Button shape="rounded" color="color1">R2 C5</Button>
+        <Button shape="rounded" color="color2">R2 C6</Button>
 
-        <Button shape="rounded" color="color3">R4 C2</Button>
-        <Button shape="rounded" color="color4">R4 C3</Button>
-        <Button shape="rounded" color="color6">R4 C4</Button>
-        <Button shape="rounded" color="color1">R4 C5</Button>
-        <Button shape="rounded" color="color2">R4 C6</Button>
-        <Button shape="rounded" color="color3">R4 C7</Button>
+        <Button shape="rounded" color="color3">R3 C1</Button>
+        <Button shape="rounded" color="color4">R3 C2</Button>
+        <Button shape="rounded" color="color6">R3 C3</Button>
+        <Button shape="rounded" color="color1">R3 C4</Button>
+        <Button shape="rounded" color="color2">R3 C5</Button>
+        <Button shape="rounded" color="color3">R3 C6</Button>
 
-        <Button shape="rounded" color="color4">R5 C2</Button>
-        <Button shape="rounded" color="color6">R5 C3</Button>
-        <Button shape="rounded" color="color1">R5 C4</Button>
-        <Button shape="rounded" color="color2">R5 C5</Button>
-        <Button shape="rounded" color="color3">R5 C6</Button>
-        <Button shape="rounded" color="color4">R5 C7</Button>
+        <Button shape="rounded" color="color4">R4 C1</Button>
+        <Button shape="rounded" color="color6">R4 C2</Button>
+        <Button shape="rounded" color="color1">R4 C3</Button>
+        <Button shape="rounded" color="color2">R4 C4</Button>
+        <Button shape="rounded" color="color3">R4 C5</Button>
+        <Button shape="rounded" color="color4">R4 C6</Button>
 
-        <Button shape="rounded" color="color6">R6 C2</Button>
-        <Button shape="rounded" color="color1">R6 C3</Button>
-        <Button shape="rounded" color="color2">R6 C4</Button>
-        <Button shape="rounded" color="color3">R6 C5</Button>
-        <Button shape="rounded" color="color4">R6 C6</Button>
-        <Button shape="rounded" color="color6">R6 C7</Button>
+        <Button shape="rounded" color="color6">R5 C1</Button>
+        <Button shape="rounded" color="color1">R5 C2</Button>
+        <Button shape="rounded" color="color2">R5 C3</Button>
+        <Button shape="rounded" color="color3">R5 C4</Button>
+        <Button shape="rounded" color="color4">R5 C5</Button>
+        <Button shape="rounded" color="color6">R5 C6</Button>
 
-        <Button shape="rounded" color="color1">R7 C2</Button>
-        <Button shape="rounded" color="color2">R7 C3</Button>
-        <Button shape="rounded" color="color3">R7 C4</Button>
-        <Button shape="rounded" color="color4">R7 C5</Button>
-        <Button shape="rounded" color="color6">R7 C6</Button>
-        <Button shape="rounded" color="color1">R7 C7</Button>
+        <Button shape="rounded" color="color1">R6 C1</Button>
+        <Button shape="rounded" color="color2">R6 C2</Button>
+        <Button shape="rounded" color="color3">R6 C3</Button>
+        <Button shape="rounded" color="color4">R6 C4</Button>
+        <Button shape="rounded" color="color6">R6 C5</Button>
+        <Button shape="rounded" color="color1">R6 C6</Button>
 
-        <Button shape="rounded" color="color2">R8 C2</Button>
-        <Button shape="rounded" color="color3">R8 C3</Button>
-        <Button shape="rounded" color="color4">R8 C4</Button>
-        <Button shape="rounded" color="color6">R8 C5</Button>
-        <Button shape="rounded" color="color1">R8 C6</Button>
-        <Button shape="rounded" color="color2">R8 C7</Button>
+        <Button shape="rounded" color="color2">R7 C1</Button>
+        <Button shape="rounded" color="color3">R7 C2</Button>
+        <Button shape="rounded" color="color4">R7 C3</Button>
+        <Button shape="rounded" color="color6">R7 C4</Button>
+        <Button shape="rounded" color="color1">R7 C5</Button>
+        <Button shape="rounded" color="color2">R7 C6</Button>
 
-        <Button shape="rounded" color="color3">R9 C2</Button>
-        <Button shape="rounded" color="color4">R9 C3</Button>
-        <Button shape="rounded" color="color6">R9 C4</Button>
-        <Button shape="rounded" color="color1">R9 C5</Button>
-        <Button shape="rounded" color="color2">R9 C6</Button>
-        <Button shape="rounded" color="color3">R9 C7</Button>
+        <Button shape="rounded" color="color3">R8 C1</Button>
+        <Button shape="rounded" color="color4">R8 C2</Button>
+        <Button shape="rounded" color="color6">R8 C3</Button>
+        <Button shape="rounded" color="color1">R8 C4</Button>
+        <Button shape="rounded" color="color2">R8 C5</Button>
+        <Button shape="rounded" color="color3">R8 C6</Button>
       </Matrix>
 
       <Commands>

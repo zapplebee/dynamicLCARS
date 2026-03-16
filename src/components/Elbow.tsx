@@ -45,14 +45,14 @@ function getElbowGeometry(corner: ElbowCorner) {
     case "topLeft":
       return {
         offsetLeft: 0,
-        offsetTop: 0,
+        offsetTop: -35,
         path: "M 75 0 C 33.578644 0 0 33.57864 0 75.00002 L 0 95.00002 L 150 95.00002 L 150 67.50002 C 150 46.78932 166.78932 30 187.5 30 L 187.5 0 Z",
         rect: { x: 187, y: 0 },
       };
     case "topRight":
       return {
         offsetLeft: -312,
-        offsetTop: 0,
+        offsetTop: -35,
         path: "M 387 0 C 428.421356 0 462 33.57864 462 75.00002 L 462 95.00002 L 312 95.00002 L 312 67.50002 C 312 46.78932 295.21068 30 274.5 30 L 274.5 0 Z",
         rect: { x: 0, y: 0 },
       };

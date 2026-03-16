@@ -18,7 +18,7 @@ function Grid({ width, height, children }: GridProps) {
             height: `${height - (STAGE_INSET * 2)}px`,
             margin: `${STAGE_INSET}px`,
             gridTemplateColumns: `repeat(8, ${CELL_WIDTH}px)`,
-            gridTemplateRows: `repeat(10, ${CELL_HEIGHT}px)`,
+            gridTemplateRows: `repeat(8, ${CELL_HEIGHT}px)`,
             gap: `${CELL_GAP}px`,
           }}
         >
