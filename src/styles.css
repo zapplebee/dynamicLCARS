@@ -50,7 +50,7 @@ body {
 
 .lcars-tabs {
   grid-column: 1;
-  grid-row: 2 / span 6;
+  grid-row: 2 / span 7;
   grid-auto-rows: 60px;
 }
 

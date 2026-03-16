@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useState } from "react";
 import Button from "./components/Button";
 import Elbow from "./components/Elbow";
 import Grid from "./components/Grid";
@@ -9,6 +10,36 @@ import TerminalPane from "./components/TerminalPane";
 import { STAGE_HEIGHT, STAGE_WIDTH } from "./theme";
 
 function App() {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(document.fullscreenElement !== null);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    handleFullscreenChange();
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
+  const toggleFullscreen = useCallback(async () => {
+    const shell = document.querySelector(".lcars-shell");
+
+    if (!(shell instanceof HTMLElement)) {
+      return;
+    }
+
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+      return;
+    }
+
+    await shell.requestFullscreen();
+  }, []);
+
   return (
     <Grid width={STAGE_WIDTH} height={STAGE_HEIGHT}>
       <Elbow corner="topLeft" color="color8" />
@@ -22,6 +53,9 @@ function App() {
         <Button shape="rect" color="color3" active>SUBSPACE</Button>
         <Button shape="rect" color="color3">OFFICERS</Button>
         <Button shape="rect" color="color3" gridHeight={2}>ABOUT</Button>
+        <Button shape="rect" color="color3" onClick={() => void toggleFullscreen()} active={isFullscreen}>
+          FULLSCREEN
+        </Button>
       </Tabs>
 
       <Matrix>
