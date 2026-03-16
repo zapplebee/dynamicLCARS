@@ -1,7 +1,7 @@
 import type { ButtonColor, ButtonShape } from "./types";
 
-export const STAGE_WIDTH = 1245;
-export const STAGE_HEIGHT = 655;
+export const STAGE_WIDTH = 1555;
+export const STAGE_HEIGHT = 785;
 export const STAGE_INSET = 5;
 export const CELL_WIDTH = 150;
 export const CELL_HEIGHT = 60;

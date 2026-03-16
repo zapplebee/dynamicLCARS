@@ -25,23 +25,18 @@ function App() {
       </Tabs>
 
       <Matrix>
-        <Pane gridWidth={6} gridHeight={6}>
+        <Pane gridWidth={8} gridHeight={11}>
           <TerminalPane />
         </Pane>
 
-        <Button shape="rounded" color="color2">R7 C1</Button>
-        <Button shape="rounded" color="color3">R7 C2</Button>
-        <Button shape="rounded" color="color4">R7 C3</Button>
-        <Button shape="rounded" color="color6">R7 C4</Button>
-        <Button shape="rounded" color="color1">R7 C5</Button>
-        <Button shape="rounded" color="color2">R7 C6</Button>
-
-        <Button shape="rounded" color="color3">R8 C1</Button>
-        <Button shape="rounded" color="color4">R8 C2</Button>
-        <Button shape="rounded" color="color6">R8 C3</Button>
-        <Button shape="rounded" color="color1">R8 C4</Button>
-        <Button shape="rounded" color="color2">R8 C5</Button>
-        <Button shape="rounded" color="color3">R8 C6</Button>
+        <Button shape="rounded" color="color2">C1</Button>
+        <Button shape="rounded" color="color3">C2</Button>
+        <Button shape="rounded" color="color4">C3</Button>
+        <Button shape="rounded" color="color6">C4</Button>
+        <Button shape="rounded" color="color1">C5</Button>
+        <Button shape="rounded" color="color2">C6</Button>
+        <Button shape="rounded" color="color3">C7</Button>
+        <Button shape="rounded" color="color4">C8</Button>
       </Matrix>
 
       <SessionCommands />
