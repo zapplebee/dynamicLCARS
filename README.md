@@ -93,6 +93,30 @@ This produces:
 - frontend assets in `dist/`
 - bundled Node server in `dist-server/`
 
+## Bun Binary
+
+There is now an experimental Bun-native server path for shipping the app without Docker.
+
+Build the binary:
+
+```bash
+bun run build:binary
+```
+
+This produces `dist-bin/dynamic-lcars`.
+
+Run it directly:
+
+```bash
+LCARS_SSH_HOST=example-host \
+LCARS_SSH_USER=zac \
+LCARS_SSH_KEY_PATH=/absolute/path/to/id_ed25519 \
+LCARS_SSH_KNOWN_HOSTS_PATH=/absolute/path/to/known_hosts \
+./dist-bin/dynamic-lcars
+```
+
+The compiled server still expects the built frontend assets in `dist/` next to the binary.
+
 ## Docker image
 
 Build the image locally:

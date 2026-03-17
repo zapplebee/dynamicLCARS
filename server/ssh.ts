@@ -1,5 +1,9 @@
 import type { RuntimeConfig } from "./config";
 
+function shellQuote(value: string) {
+  return `'${value.replace(/'/g, `'"'"'`)}'`;
+}
+
 export function buildSshArgs(config: RuntimeConfig, remoteCommand?: string) {
   const args = [
     "-i",
@@ -18,4 +22,8 @@ export function buildSshArgs(config: RuntimeConfig, remoteCommand?: string) {
   }
 
   return args;
+}
+
+export function buildSshCommand(config: RuntimeConfig, remoteCommand?: string) {
+  return ["ssh", ...buildSshArgs(config, remoteCommand)].map(shellQuote).join(" ");
 }

@@ -1,8 +1,8 @@
 import crypto from "node:crypto";
 import process from "node:process";
-import pty, { type IPty } from "node-pty";
+import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import type { RuntimeConfig } from "./config";
-import { buildSshArgs } from "./ssh";
+import { buildSshCommand } from "./ssh";
 
 const MAX_BUFFER_LENGTH = 64_000;
 
@@ -20,7 +20,7 @@ export type ShellSummary = {
 type ManagedShellConnection = {
   shellId: string;
   label: string;
-  ptyProcess: IPty | null;
+  process: ChildProcessWithoutNullStreams | null;
   socket: TerminalSocket | null;
   buffer: string;
   lastSeenAt: number;
@@ -90,7 +90,7 @@ export class TerminalSessionManager {
     const connection: ManagedShellConnection = {
       shellId,
       label,
-      ptyProcess: null,
+      process: null,
       socket: null,
       buffer: "",
       lastSeenAt: Date.now(),
@@ -163,7 +163,7 @@ export class TerminalSessionManager {
     const session = this.sessions.get(sessionId);
     const connection = session?.connections.get(shellId);
 
-    connection?.ptyProcess?.write(data);
+    connection?.process?.stdin.write(data);
 
     if (session && connection) {
       session.lastSeenAt = Date.now();
@@ -175,7 +175,7 @@ export class TerminalSessionManager {
     const session = this.ensureSession(sessionId);
     const connection = this.ensureConnection(session, shellId);
 
-    if (!connection?.ptyProcess) {
+    if (!connection?.process) {
       throw new Error("Shell is unavailable.");
     }
 
@@ -193,7 +193,7 @@ export class TerminalSessionManager {
       }, 15000);
 
       connection.execRequests.push({ startMarker, endMarker, resolve, reject, timeoutId });
-      connection.ptyProcess?.write(`${disableEcho}printf '${startMarker}\n'; ${command}; printf '${endMarker}:%s\n' "$?"\n`);
+      connection.process?.stdin.write(`${disableEcho}printf '${startMarker}\n'; ${command}; printf '${endMarker}:%s\n' "$?"\n`);
     });
   }
 
@@ -201,11 +201,11 @@ export class TerminalSessionManager {
     const session = this.sessions.get(sessionId);
     const connection = session?.connections.get(shellId);
 
-    if (!session || !connection?.ptyProcess) {
+    if (!session || !connection?.process) {
       return;
     }
 
-    connection.ptyProcess.resize(cols, rows);
+    connection.process.stdin.write(`stty cols ${cols} rows ${rows}\n`);
     connection.lastSeenAt = Date.now();
     session.lastSeenAt = Date.now();
   }
@@ -228,7 +228,7 @@ export class TerminalSessionManager {
 
       for (const connection of session.connections.values()) {
         connection.socket?.close(1001, "idle timeout");
-        connection.ptyProcess?.kill();
+        connection.process?.kill();
       }
 
       this.sessions.delete(sessionId);
@@ -262,21 +262,20 @@ export class TerminalSessionManager {
       return null;
     }
 
-    if (connection.ptyProcess) {
+    if (connection.process) {
       return connection;
     }
 
-    const ptyProcess = pty.spawn("ssh", ["-tt", ...buildSshArgs(this.config, buildRemoteCommand())], {
-      name: "xterm-256color",
-      cols: 120,
-      rows: 40,
+    const child = spawn("script", ["-qfc", buildSshCommand(this.config, buildRemoteCommand()), "/dev/null"], {
       cwd: process.cwd(),
       env: process.env,
     });
 
-    connection.ptyProcess = ptyProcess;
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    connection.process = child;
 
-    ptyProcess.onData((chunk) => {
+    const handleChunk = (chunk: string) => {
       connection.lastSeenAt = Date.now();
       session.lastSeenAt = Date.now();
       connection.buffer = `${connection.buffer}${chunk}`.slice(-MAX_BUFFER_LENGTH);
@@ -285,16 +284,20 @@ export class TerminalSessionManager {
       if (connection.socket && connection.socket.readyState === 1) {
         connection.socket.send(JSON.stringify({ type: "output", data: chunk }));
       }
-    });
+    };
 
-    ptyProcess.onExit(() => {
+    child.stdout.on("data", handleChunk);
+    child.stderr.on("data", handleChunk);
+    child.stdin.write("stty cols 120 rows 40\n");
+
+    child.on("exit", () => {
       for (const request of connection.execRequests) {
         clearTimeout(request.timeoutId);
         request.reject(new Error("Shell exited before command completed."));
       }
 
       connection.execRequests = [];
-      connection.ptyProcess = null;
+      connection.process = null;
       connection.socket = null;
     });
 
