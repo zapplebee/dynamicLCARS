@@ -24,6 +24,12 @@ type ManagedShellConnection = {
   socket: TerminalSocket | null;
   buffer: string;
   lastSeenAt: number;
+  execRequests: Array<{
+    marker: string;
+    resolve: (output: string) => void;
+    reject: (error: Error) => void;
+    timeoutId: ReturnType<typeof setTimeout>;
+  }>;
 };
 
 type BrowserTerminalSession = {
@@ -83,6 +89,7 @@ export class TerminalSessionManager {
       socket: null,
       buffer: "",
       lastSeenAt: Date.now(),
+      execRequests: [],
     };
 
     session.nextShellNumber += 1;
@@ -157,6 +164,27 @@ export class TerminalSessionManager {
       session.lastSeenAt = Date.now();
       connection.lastSeenAt = Date.now();
     }
+  }
+
+  async execInShell(sessionId: string, shellId: string, command: string) {
+    const session = this.ensureSession(sessionId);
+    const connection = this.ensureConnection(session, shellId);
+
+    if (!connection?.ptyProcess) {
+      throw new Error("Shell is unavailable.");
+    }
+
+    const marker = `__LCARS_DONE_${crypto.randomUUID()}__`;
+
+    return await new Promise<string>((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        connection.execRequests = connection.execRequests.filter((request) => request.marker !== marker);
+        reject(new Error("Timed out waiting for shell command output."));
+      }, 15000);
+
+      connection.execRequests.push({ marker, resolve, reject, timeoutId });
+      connection.ptyProcess?.write(`${command}; printf '${marker}:%s\n' "$?"\n`);
+    });
   }
 
   resize(sessionId: string, shellId: string, cols: number, rows: number) {
@@ -242,6 +270,7 @@ export class TerminalSessionManager {
       connection.lastSeenAt = Date.now();
       session.lastSeenAt = Date.now();
       connection.buffer = `${connection.buffer}${chunk}`.slice(-MAX_BUFFER_LENGTH);
+      this.resolveExecRequests(connection);
 
       if (connection.socket && connection.socket.readyState === 1) {
         connection.socket.send(JSON.stringify({ type: "output", data: chunk }));
@@ -249,10 +278,42 @@ export class TerminalSessionManager {
     });
 
     ptyProcess.onExit(() => {
+      for (const request of connection.execRequests) {
+        clearTimeout(request.timeoutId);
+        request.reject(new Error("Shell exited before command completed."));
+      }
+
+      connection.execRequests = [];
       connection.ptyProcess = null;
       connection.socket = null;
     });
 
     return connection;
+  }
+
+  private resolveExecRequests(connection: ManagedShellConnection) {
+    if (connection.execRequests.length === 0) {
+      return;
+    }
+
+    for (const request of [...connection.execRequests]) {
+      const markerIndex = connection.buffer.indexOf(request.marker);
+
+      if (markerIndex === -1) {
+        continue;
+      }
+
+      const markerLineEnd = connection.buffer.indexOf("\n", markerIndex);
+
+      if (markerLineEnd === -1) {
+        continue;
+      }
+
+      const output = connection.buffer.slice(0, markerIndex).trim();
+      connection.buffer = connection.buffer.slice(markerLineEnd + 1);
+      connection.execRequests = connection.execRequests.filter((entry) => entry.marker !== request.marker);
+      clearTimeout(request.timeoutId);
+      request.resolve(output);
+    }
   }
 }

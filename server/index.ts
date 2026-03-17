@@ -14,6 +14,7 @@ type BootstrapResponse = {
 type ShellRequest = {
   sessionId?: string;
   shellId?: string;
+  command?: string;
 };
 
 const config = loadConfig();
@@ -74,6 +75,24 @@ app.post("/api/shells/select", async (c) => {
   }
 
   return c.json({ currentShellId: shell.id });
+});
+
+app.post("/api/shells/exec", async (c) => {
+  const body = (await c.req.json()) as ShellRequest;
+  const sessionId = body.sessionId?.trim();
+  const shellId = body.shellId?.trim();
+  const command = body.command?.trim();
+
+  if (!sessionId || !shellId || !command) {
+    return c.json({ error: "Terminal session id, shell id, and command are required." }, 400);
+  }
+
+  try {
+    const output = await terminalSessions.execInShell(sessionId, shellId, command);
+    return c.json({ output });
+  } catch (error) {
+    return c.json({ error: error instanceof Error ? error.message : "Shell command failed." }, 500);
+  }
 });
 
 app.get("/terminal/ws", upgradeWebSocket((c) => {
