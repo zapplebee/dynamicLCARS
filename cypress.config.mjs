@@ -5,7 +5,7 @@ export default defineConfig({
   screenshotOnRunFailure: true,
   chromeWebSecurity: false,
   e2e: {
-    baseUrl: "http://127.0.0.1:3002",
+    baseUrl: "http://127.0.0.1:1701",
     specPattern: "cypress/e2e/**/*.cy.js",
     supportFile: false,
     defaultCommandTimeout: 20000,

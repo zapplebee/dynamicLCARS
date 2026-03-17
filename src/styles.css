@@ -191,6 +191,15 @@ body {
   background: rgba(2, 4, 10, 0.82);
 }
 
+.lcars-terminal-pane__terminal .xterm-viewport {
+  scrollbar-width: none;
+  overflow-y: hidden !important;
+}
+
+.lcars-terminal-pane__terminal .xterm-viewport::-webkit-scrollbar {
+  display: none;
+}
+
 .lcars-route-panel {
   display: flex;
   flex: 1;

@@ -13,7 +13,7 @@
       "protocol": "http",
       "requireLocalPort": true
     },
-    "3002": {
+    "1701": {
       "label": "LCARS tmux bridge",
       "protocol": "http",
       "requireLocalPort": true

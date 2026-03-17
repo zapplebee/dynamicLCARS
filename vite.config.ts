@@ -9,11 +9,11 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       "/api": {
-        target: "http://127.0.0.1:3002",
+        target: "http://127.0.0.1:1701",
         changeOrigin: true,
       },
       "/terminal": {
-        target: "http://127.0.0.1:3002",
+        target: "http://127.0.0.1:1701",
         changeOrigin: true,
         ws: true,
       },

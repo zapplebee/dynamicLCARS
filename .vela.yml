@@ -38,7 +38,7 @@ steps:
     image: cypress/included:latest
     pull: always
     environment:
-      CYPRESS_BASE_URL: http://dynamic-lcars:3002
+      CYPRESS_BASE_URL: http://dynamic-lcars:1701
     commands:
       - cd ${VELA_WORKSPACE} && cypress run --browser chrome
 

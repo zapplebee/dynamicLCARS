@@ -10,7 +10,7 @@ The server expects these environment variables at runtime:
 - `LCARS_SSH_USER`
 - `LCARS_SSH_KEY_PATH`
 - `LCARS_SSH_KNOWN_HOSTS_PATH`
-- `LCARS_HTTP_PORT` (optional, defaults to `3002`)
+- `LCARS_HTTP_PORT` (optional, defaults to `1701`)
 - `LCARS_SESSION_IDLE_TTL_SECONDS` (optional, defaults to `1800`)
 
 The mounted private key and `known_hosts` file should be read-only.
@@ -39,7 +39,7 @@ export LCARS_SSH_KNOWN_HOSTS_PATH=/absolute/path/to/known_hosts
 bun run dev:server
 ```
 
-Open `http://127.0.0.1:5173`. Vite proxies `/api/*` and `/terminal/*` to the Node/Hono backend on port `3002`.
+Open `http://127.0.0.1:5173`. Vite proxies `/api/*` and `/terminal/*` to the Node/Hono backend on port `1701`.
 
 ## Build
 
@@ -63,7 +63,7 @@ docker build -t dynamic-lcars .
 Run it with a mounted private key and mounted `known_hosts`:
 
 ```bash
-docker run --rm -p 3002:3002 \
+docker run --rm -p 1701:1701 \
   -e LCARS_SSH_HOST=example-host \
   -e LCARS_SSH_USER=zac \
   -e LCARS_SSH_KEY_PATH=/run/secrets/id_ed25519 \
@@ -74,7 +74,7 @@ docker run --rm -p 3002:3002 \
   dynamic-lcars
 ```
 
-Then open `http://127.0.0.1:3002`.
+Then open `http://127.0.0.1:1701`.
 
 ## Notes
 

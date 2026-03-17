@@ -1,6 +1,6 @@
 import process from "node:process";
 
-const DEFAULT_HTTP_PORT = 3002;
+const DEFAULT_HTTP_PORT = 1701;
 const DEFAULT_IDLE_TTL_SECONDS = 1800;
 
 function readRequiredEnv(name: string) {

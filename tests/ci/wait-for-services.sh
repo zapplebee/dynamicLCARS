@@ -28,7 +28,7 @@ done
 
 echo "Waiting for dynamic-lcars..."
 for i in $(seq 1 120); do
-  if curl -sf http://dynamic-lcars:3002/api/health >/dev/null; then
+  if curl -sf http://dynamic-lcars:1701/api/health >/dev/null; then
     echo "dynamic-lcars ready"
     break
   fi

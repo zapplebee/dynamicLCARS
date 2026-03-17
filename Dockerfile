@@ -36,13 +36,13 @@ RUN apt-get update \
 
 WORKDIR /app
 ENV NODE_ENV=production
-ENV LCARS_HTTP_PORT=3002
+ENV LCARS_HTTP_PORT=1701
 
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/dist-server ./dist-server
 COPY package.json ./package.json
 
-EXPOSE 3002
+EXPOSE 1701
 
 CMD ["node", "dist-server/index.js"]
