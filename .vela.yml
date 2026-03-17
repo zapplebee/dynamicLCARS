@@ -32,11 +32,28 @@ services:
       - "until [ -f ${VELA_WORKSPACE}/tests/ci/start-app.sh ]; do sleep 1; done && /bin/sh ${VELA_WORKSPACE}/tests/ci/start-app.sh"
 
 steps:
+  - name: docker-build-smoke
+    image: target/vela-docker:latest
+    pull: always
+    secrets: [docker_username, docker_password]
+    parameters:
+      dry_run: true
+      registry: harbor.prettybird.zapplebee.online
+      repo: harbor.prettybird.zapplebee.online/library/dynamic-lcars
+      tags:
+        - harbor.prettybird.zapplebee.online/library/dynamic-lcars:ci-smoke
+
   - name: wait-for-services
     image: alpine:latest
     pull: always
     commands:
       - /bin/sh ${VELA_WORKSPACE}/tests/ci/wait-for-services.sh
+
+  - name: binary-runtime-smoke
+    image: node:24-bookworm
+    pull: always
+    commands:
+      - /bin/sh ${VELA_WORKSPACE}/tests/ci/smoke-binary.sh
 
   - name: cypress
     image: cypress/included:latest
