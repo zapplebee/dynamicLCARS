@@ -17,7 +17,6 @@ steps:
   - name: publish-push
     ruleset:
       event: push
-      branch: main
     image: target/vela-docker:latest
     pull: always
     secrets: [docker_username, docker_password]
