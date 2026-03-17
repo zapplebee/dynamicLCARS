@@ -2,6 +2,47 @@
 
 `dynamicLCARS` is a single-origin remote workstation UI: one web app, one mounted SSH key, one mounted `known_hosts`, and a remote machine that already has `tmux`, `git`, and `gh` installed.
 
+## Usage
+
+The recommended user-facing way to run `dynamicLCARS` is with the published Docker image.
+
+Quick start:
+
+```bash
+docker run --rm -p 1701:1701 \
+  -e LCARS_SSH_HOST=example-host \
+  -e LCARS_SSH_USER=zac \
+  -e LCARS_SSH_KEY_PATH=/run/secrets/id_ed25519 \
+  -e LCARS_SSH_KNOWN_HOSTS_PATH=/run/secrets/known_hosts \
+  -v "$HOME/.ssh/id_ed25519:/run/secrets/id_ed25519:ro" \
+  -v "$HOME/.ssh/known_hosts:/run/secrets/known_hosts:ro" \
+  harbor.prettybird.zapplebee.online/library/dynamic-lcars:latest
+```
+
+Example Compose:
+
+```yaml
+services:
+  dynamic-lcars:
+    image: harbor.prettybird.zapplebee.online/library/dynamic-lcars:latest
+    ports:
+      - "1701:1701"
+    environment:
+      LCARS_SSH_HOST: example-host
+      LCARS_SSH_USER: zac
+      LCARS_SSH_KEY_PATH: /run/secrets/id_ed25519
+      LCARS_SSH_KNOWN_HOSTS_PATH: /run/secrets/known_hosts
+    volumes:
+      - ${HOME}/.ssh/id_ed25519:/run/secrets/id_ed25519:ro
+      - ${HOME}/.ssh/known_hosts:/run/secrets/known_hosts:ro
+```
+
+Open `http://127.0.0.1:1701` and see `docs/usage.md` for the full usage guide.
+
+## Developer Notes
+
+The rest of this README is aimed at developers and coding agents working on the repo.
+
 ## Runtime contract
 
 The server expects these environment variables at runtime:
@@ -54,27 +95,11 @@ This produces:
 
 ## Docker image
 
-Build the image:
+Build the image locally:
 
 ```bash
 docker build -t dynamic-lcars .
 ```
-
-Run it with a mounted private key and mounted `known_hosts`:
-
-```bash
-docker run --rm -p 1701:1701 \
-  -e LCARS_SSH_HOST=example-host \
-  -e LCARS_SSH_USER=zac \
-  -e LCARS_SSH_KEY_PATH=/run/secrets/id_ed25519 \
-  -e LCARS_SSH_KNOWN_HOSTS_PATH=/run/secrets/known_hosts \
-  -e LCARS_SESSION_IDLE_TTL_SECONDS=1800 \
-  -v "$HOME/.ssh/id_ed25519:/run/secrets/id_ed25519:ro" \
-  -v "$HOME/.ssh/known_hosts:/run/secrets/known_hosts:ro" \
-  dynamic-lcars
-```
-
-Then open `http://127.0.0.1:1701`.
 
 ## Notes
 
