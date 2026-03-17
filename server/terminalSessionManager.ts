@@ -32,7 +32,12 @@ function shellQuote(value: string) {
 }
 
 function buildRemoteCommand(sessionName: string) {
-  return `sh -lc ${shellQuote(`exec tmux attach-session -t ${shellQuote(sessionName)} || exec \${SHELL:-/bin/bash} -l`)}`;
+  const script = [
+    `LCARS_SESSION=${shellQuote(sessionName)}`,
+    'exec tmux attach-session -t "$LCARS_SESSION" || exec ${SHELL:-/bin/bash} -l',
+  ].join("; ");
+
+  return `sh -lc ${shellQuote(script)}`;
 }
 
 export class TerminalSessionManager {
