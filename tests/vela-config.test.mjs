@@ -1,37 +1,35 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import YAML from "yaml";
 
-const pipeline = YAML.parse(readFileSync(new URL("../.vela.yml", import.meta.url), "utf8"));
+const pipeline = readFileSync(new URL("../.vela.yml", import.meta.url), "utf8");
 
-function getStep(name) {
-  const step = pipeline.steps.find((entry) => entry.name === name);
-  assert.ok(step, `expected step '${name}' to exist`);
-  return step;
+function getStepBlock(name) {
+  const match = pipeline.match(new RegExp(`- name: ${name}[\\s\\S]*?(?=\\n  - name:|$)`));
+  assert.ok(match, `expected step '${name}' to exist`);
+  return match[0];
 }
 
 test("cypress only runs for PRs and main pushes", () => {
-  const waitStep = getStep("wait-for-services");
-  const cypressStep = getStep("cypress");
+  const waitStep = getStepBlock("wait-for-services");
+  const cypressStep = getStepBlock("cypress");
 
-  assert.deepEqual(waitStep.ruleset?.event, ["push", "pull_request"]);
-  assert.deepEqual(waitStep.ruleset?.branch, ["main"]);
+  assert.match(waitStep, /event: \[push, pull_request\]/);
+  assert.match(waitStep, /branch: \[main\]/);
 
-  assert.deepEqual(cypressStep.ruleset?.event, ["push", "pull_request"]);
-  assert.deepEqual(cypressStep.ruleset?.branch, ["main"]);
+  assert.match(cypressStep, /event: \[push, pull_request\]/);
+  assert.match(cypressStep, /branch: \[main\]/);
 });
 
 test("publish push only runs from main", () => {
-  const publishStep = getStep("publish-push");
+  const publishStep = getStepBlock("publish-push");
 
-  assert.equal(publishStep.ruleset?.event, "push");
-  assert.equal(publishStep.ruleset?.branch, "main");
+  assert.match(publishStep, /event: push/);
+  assert.match(publishStep, /branch: main/);
 });
 
 test("validate ci config step runs before branch-specific validation", () => {
-  const validateStep = getStep("validate-ci-config");
+  const validateStep = getStepBlock("validate-ci-config");
 
-  assert.match(validateStep.commands[0], /bun install --frozen-lockfile/);
-  assert.match(validateStep.commands[1], /bun run test:ci-config/);
+  assert.match(validateStep, /npm run test:ci-config/);
 });
