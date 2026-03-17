@@ -84,10 +84,11 @@ steps:
   - name: upload-binary-tag
     ruleset:
       event: tag
-    image: ghcr.io/cli/cli:latest
+    image: target/vela-github-release:v0.5.0
     pull: always
-    secrets:
-      - source: github_token
-        target: GH_TOKEN
-    commands:
-      - cd ${VELA_WORKSPACE} && gh release upload "${VELA_BUILD_TAG}" dist-bin/dynamic-lcars-linux-x64 --clobber --repo "${VELA_REPO_FULL_NAME}"
+    secrets: [github_token]
+    parameters:
+      action: upload
+      files: [ dist-bin/dynamic-lcars-linux-x64 ]
+      tag: ${VELA_BUILD_TAG}
+      clobber: true
