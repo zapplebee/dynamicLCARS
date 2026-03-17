@@ -84,11 +84,14 @@ steps:
   - name: upload-binary-tag
     ruleset:
       event: tag
-    image: target/vela-github-release:v0.5.0
+    image: target/vela-github-release:latest
     pull: always
-    secrets: [github_token]
+    secrets:
+      - source: github_token
+        target: PARAMETER_TOKEN
     parameters:
       action: upload
+      hostname: github.com
       files: [ dist-bin/dynamic-lcars-linux-x64 ]
       tag: ${VELA_BUILD_TAG}
       clobber: true
