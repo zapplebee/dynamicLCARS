@@ -25,7 +25,8 @@ type ManagedShellConnection = {
   buffer: string;
   lastSeenAt: number;
   execRequests: Array<{
-    marker: string;
+    startMarker: string;
+    endMarker: string;
     resolve: (output: string) => void;
     reject: (error: Error) => void;
     timeoutId: ReturnType<typeof setTimeout>;
@@ -178,19 +179,21 @@ export class TerminalSessionManager {
       throw new Error("Shell is unavailable.");
     }
 
-    const marker = `__LCARS_DONE_${crypto.randomUUID()}__`;
+    const markerId = crypto.randomUUID();
+    const startMarker = `__LCARS_START_${markerId}__`;
+    const endMarker = `__LCARS_DONE_${markerId}__`;
     const disableEcho = process.env.LCARS_DISABLE_TTY_ECHO === "1"
       ? "stty -echo >/dev/null 2>&1 || true; "
       : "";
 
     return await new Promise<string>((resolve, reject) => {
       const timeoutId = setTimeout(() => {
-        connection.execRequests = connection.execRequests.filter((request) => request.marker !== marker);
+        connection.execRequests = connection.execRequests.filter((request) => request.endMarker !== endMarker);
         reject(new Error("Timed out waiting for shell command output."));
       }, 15000);
 
-      connection.execRequests.push({ marker, resolve, reject, timeoutId });
-      connection.ptyProcess?.write(`${disableEcho}${command}; printf '${marker}:%s\n' "$?"\n`);
+      connection.execRequests.push({ startMarker, endMarker, resolve, reject, timeoutId });
+      connection.ptyProcess?.write(`${disableEcho}printf '${startMarker}\n'; ${command}; printf '${endMarker}:%s\n' "$?"\n`);
     });
   }
 
@@ -304,21 +307,33 @@ export class TerminalSessionManager {
     }
 
     for (const request of [...connection.execRequests]) {
-      const markerIndex = connection.buffer.lastIndexOf(request.marker);
+      const startIndex = connection.buffer.indexOf(request.startMarker);
 
-      if (markerIndex === -1) {
+      if (startIndex === -1) {
         continue;
       }
 
-      const markerLineEnd = connection.buffer.indexOf("\n", markerIndex);
+      const contentStart = connection.buffer.indexOf("\n", startIndex);
+
+      if (contentStart === -1) {
+        continue;
+      }
+
+      const endIndex = connection.buffer.indexOf(request.endMarker, contentStart + 1);
+
+      if (endIndex === -1) {
+        continue;
+      }
+
+      const markerLineEnd = connection.buffer.indexOf("\n", endIndex);
 
       if (markerLineEnd === -1) {
         continue;
       }
 
-      const output = connection.buffer.slice(0, markerIndex).trim();
+      const output = connection.buffer.slice(contentStart + 1, endIndex).trim();
       connection.buffer = connection.buffer.slice(markerLineEnd + 1);
-      connection.execRequests = connection.execRequests.filter((entry) => entry.marker !== request.marker);
+      connection.execRequests = connection.execRequests.filter((entry) => entry.endMarker !== request.endMarker);
       clearTimeout(request.timeoutId);
       request.resolve(output);
     }
