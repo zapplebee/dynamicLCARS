@@ -26,5 +26,6 @@ exec env \
   LCARS_SSH_KEY_PATH="$VELA_WORKSPACE/tests/fixtures/ssh/id_ed25519" \
   LCARS_SSH_KNOWN_HOSTS_PATH="$VELA_WORKSPACE/tests/fixtures/ssh/known_hosts" \
   LCARS_HTTP_PORT=3002 \
+  LCARS_DISABLE_TTY_ECHO=1 \
   LCARS_SESSION_IDLE_TTL_SECONDS=1800 \
   node dist-server/index.js

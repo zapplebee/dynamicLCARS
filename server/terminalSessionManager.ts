@@ -42,7 +42,11 @@ type BrowserTerminalSession = {
 };
 
 function buildRemoteCommand() {
-  return "sh -lc 'exec ${SHELL:-/bin/bash} -l'";
+  const disableEcho = process.env.LCARS_DISABLE_TTY_ECHO === "1"
+    ? "stty -echo >/dev/null 2>&1 || true; "
+    : "";
+
+  return `sh -lc '${disableEcho}exec \${SHELL:-/bin/bash} -l'`;
 }
 
 export class TerminalSessionManager {
