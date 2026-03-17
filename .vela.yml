@@ -28,13 +28,25 @@ services:
       - "until [ -f ${VELA_WORKSPACE}/tests/ci/start-app.sh ]; do sleep 1; done && /bin/sh ${VELA_WORKSPACE}/tests/ci/start-app.sh"
 
 steps:
+  - name: validate-ci-config
+    image: node:24-bookworm
+    pull: always
+    commands:
+      - cd ${VELA_WORKSPACE} && npm run test:ci-config
+
   - name: wait-for-services
+    ruleset:
+      event: [push, pull_request]
+      branch: [main]
     image: alpine:latest
     pull: always
     commands:
       - /bin/sh ${VELA_WORKSPACE}/tests/ci/wait-for-services.sh
 
   - name: cypress
+    ruleset:
+      event: [push, pull_request]
+      branch: [main]
     image: cypress/included:latest
     pull: always
     environment:
@@ -45,6 +57,7 @@ steps:
   - name: publish-push
     ruleset:
       event: push
+      branch: main
     image: target/vela-docker:latest
     pull: always
     secrets: [docker_username, docker_password]

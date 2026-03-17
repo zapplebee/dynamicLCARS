@@ -9,6 +9,7 @@
     "build": "vite build && tsup server/index.ts --format esm --platform node --target node24 --out-dir dist-server --clean",
     "preview": "vite preview",
     "start": "NODE_ENV=production node dist-server/index.js",
+    "test:ci-config": "node --test tests/vela-config.test.mjs",
     "test:e2e": "npx cypress run --browser chrome"
   },
   "dependencies": {
