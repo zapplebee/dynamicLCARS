@@ -10,7 +10,7 @@ import { STAGE_HEIGHT, STAGE_WIDTH } from "./theme";
 
 function App() {
   const [selectedTool, setSelectedTool] = useState<ToolRoute>("shell");
-  const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const [selectedShell, setSelectedShell] = useState<string | null>(null);
 
   return (
     <Grid width={STAGE_WIDTH} height={STAGE_HEIGHT}>
@@ -23,11 +23,11 @@ function App() {
 
       <Matrix>
         <Pane gridWidth={8} gridHeight={11}>
-          <MainView selectedTool={selectedTool} selectedSession={selectedSession} />
+          <MainView selectedTool={selectedTool} selectedShell={selectedShell} />
         </Pane>
       </Matrix>
 
-      <SessionCommands currentSession={selectedSession} onCurrentSessionChange={setSelectedSession} />
+      <SessionCommands currentShell={selectedShell} onCurrentShellChange={setSelectedShell} />
     </Grid>
   );
 }

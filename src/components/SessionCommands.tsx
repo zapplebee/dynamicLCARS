@@ -1,160 +1,146 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { readStoredTerminalSessionId } from "../browserSession";
+import { ensureTerminalSessionId, readStoredTerminalSessionId } from "../browserSession";
 import Commands from "./Commands";
 import Button from "./Button";
 
-const IDLE_THRESHOLD_SECONDS = 30;
-
-type SessionSummary = {
-  name: string;
-  idleSeconds: number;
+type ShellSummary = {
+  id: string;
+  label: string;
 };
 
-type SessionsResponse = {
-  sessions: SessionSummary[];
-};
-
-type CurrentResponse = {
-  currentSession: string | null;
-};
-
-type SelectResponse = {
-  currentSession: string;
+type ShellsResponse = {
+  shells: ShellSummary[];
+  currentShellId: string | null;
 };
 
 type SessionCommandsProps = {
-  currentSession: string | null;
-  onCurrentSessionChange: (session: string | null) => void;
+  currentShell: string | null;
+  onCurrentShellChange: (shellId: string | null) => void;
 };
 
-function SessionCommands({ currentSession, onCurrentSessionChange }: SessionCommandsProps) {
-  const [sessions, setSessions] = useState<SessionSummary[]>([]);
+function SessionCommands({ currentShell, onCurrentShellChange }: SessionCommandsProps) {
+  const [shells, setShells] = useState<ShellSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [pendingSession, setPendingSession] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
 
-  const loadState = useCallback(async (showLoading: boolean) => {
-    const sessionId = readStoredTerminalSessionId();
-
-    if (showLoading) {
-      setLoading(true);
-    }
+  const loadState = useCallback(async () => {
+    const sessionId = await ensureTerminalSessionId();
 
     try {
-      const [sessionsResponse, currentResponse] = await Promise.all([
-        fetch(sessionId ? `/api/tmux/sessions?sessionId=${encodeURIComponent(sessionId)}` : "/api/tmux/sessions"),
-        fetch("/api/tmux/current"),
-      ]);
+      const response = await fetch(`/api/shells?sessionId=${encodeURIComponent(sessionId)}`);
 
-      if (!sessionsResponse.ok || !currentResponse.ok) {
-        throw new Error("Unable to reach nyx tmux bridge.");
+      if (!response.ok) {
+        throw new Error("Unable to reach the shell manager.");
       }
 
-      const sessionsData = (await sessionsResponse.json()) as SessionsResponse;
-      const currentData = (await currentResponse.json()) as CurrentResponse;
-
-      setSessions(sessionsData.sessions);
-      onCurrentSessionChange(currentData.currentSession);
+      const data = (await response.json()) as ShellsResponse;
+      setShells(data.shells);
+      onCurrentShellChange(data.currentShellId);
       setError(null);
     } catch (loadError) {
-      const message = loadError instanceof Error ? loadError.message : "Unable to reach nyx tmux bridge.";
+      const message = loadError instanceof Error ? loadError.message : "Unable to reach the shell manager.";
       setError(message);
     } finally {
       setLoading(false);
     }
-  }, [onCurrentSessionChange]);
+  }, [onCurrentShellChange]);
 
   useEffect(() => {
-    void loadState(true);
-
-    const intervalId = window.setInterval(() => {
-      void loadState(false);
-    }, 5000);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
+    void loadState();
   }, [loadState]);
 
-  const selectSession = useCallback(async (session: string) => {
-    setPendingSession(session);
+  const createShell = useCallback(async () => {
+    const sessionId = await ensureTerminalSessionId();
+
+    setPendingAction("create");
 
     try {
-      const response = await fetch("/api/tmux/select", {
+      const response = await fetch("/api/shells", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ session, sessionId: readStoredTerminalSessionId() }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
       });
 
       if (!response.ok) {
-        throw new Error("Unable to switch the nyx viewer.");
+        throw new Error("Unable to create a new shell.");
       }
 
-      const data = (await response.json()) as SelectResponse;
-      onCurrentSessionChange(data.currentSession);
+      const data = (await response.json()) as { shell: ShellSummary; currentShellId: string };
+      setShells((existing) => [...existing, data.shell]);
+      onCurrentShellChange(data.currentShellId);
       setError(null);
-      await loadState(false);
-    } catch (selectError) {
-      const message = selectError instanceof Error ? selectError.message : "Unable to switch the nyx viewer.";
+    } catch (createError) {
+      const message = createError instanceof Error ? createError.message : "Unable to create a new shell.";
       setError(message);
     } finally {
-      setPendingSession(null);
+      setPendingAction(null);
     }
-  }, [loadState, onCurrentSessionChange]);
+  }, [onCurrentShellChange]);
 
-  const activeSession = useMemo(() => {
-    if (!currentSession) {
-      return null;
+  const selectShell = useCallback(async (shellId: string) => {
+    const sessionId = readStoredTerminalSessionId() ?? await ensureTerminalSessionId();
+
+    setPendingAction(shellId);
+
+    try {
+      const response = await fetch("/api/shells/select", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, shellId }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Unable to switch shells.");
+      }
+
+      const data = (await response.json()) as { currentShellId: string };
+      onCurrentShellChange(data.currentShellId);
+      setError(null);
+    } catch (selectError) {
+      const message = selectError instanceof Error ? selectError.message : "Unable to switch shells.";
+      setError(message);
+    } finally {
+      setPendingAction(null);
     }
-
-    return sessions.some((session) => session.name === currentSession) ? currentSession : null;
-  }, [currentSession, sessions]);
+  }, [onCurrentShellChange]);
 
   const statusLabel = useMemo(() => {
-    if (error && sessions.length === 0) {
+    if (error && shells.length === 0) {
       return "OFFLINE";
     }
 
-    if (loading && sessions.length === 0) {
+    if (loading && shells.length === 0) {
       return "SYNCING";
     }
 
-    if (sessions.length === 0) {
-      return "NO TMUX";
-    }
-
     return null;
-  }, [error, loading, sessions]);
+  }, [error, loading, shells]);
 
   return (
     <Commands side="right">
+      <Button shape="rect" color="color8" onClick={() => void createShell()} disabled={pendingAction === "create"}>
+        + SHELL
+      </Button>
+
       {statusLabel ? (
         <Button shape="rect" color={statusLabel === "OFFLINE" ? "color5" : "color8"}>
           {statusLabel}
         </Button>
       ) : null}
 
-      {sessions.map((session) => {
-        const isPending = pendingSession === session.name;
-        const isActive = activeSession === session.name;
-        const isIdle = session.idleSeconds > IDLE_THRESHOLD_SECONDS;
-        const color = isIdle ? "color6" : "color1";
-
-        return (
-          <Button
-            key={session.name}
-            shape="rect"
-            color={color}
-            active={isActive}
-            onClick={() => void selectSession(session.name)}
-            disabled={isPending}
-          >
-            {session.name}
-          </Button>
-        );
-      })}
+      {shells.map((shell) => (
+        <Button
+          key={shell.id}
+          shape="rect"
+          color="color1"
+          active={currentShell === shell.id}
+          onClick={() => void selectShell(shell.id)}
+          disabled={pendingAction === shell.id}
+        >
+          {shell.label}
+        </Button>
+      ))}
     </Commands>
   );
 }

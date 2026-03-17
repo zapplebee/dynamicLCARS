@@ -2,17 +2,13 @@ import { FitAddon } from "@xterm/addon-fit";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Terminal } from "xterm";
 import "xterm/css/xterm.css";
-import { readStoredTerminalSessionId, storeTerminalSessionId } from "../browserSession";
+import { ensureTerminalSessionId } from "../browserSession";
 
 type TerminalPaneProps = {
-  selectedSession: string | null;
+  selectedShell: string | null;
 };
 
-type BootstrapResponse = {
-  sessionId: string;
-};
-
-function TerminalPane({ selectedSession }: TerminalPaneProps) {
+function TerminalPane({ selectedShell }: TerminalPaneProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
@@ -20,27 +16,16 @@ function TerminalPane({ selectedSession }: TerminalPaneProps) {
   const [connectionState, setConnectionState] = useState("CONNECTING");
   const [sessionId, setSessionId] = useState<string | null>(null);
 
-  const sessionLabel = useMemo(() => selectedSession ?? "Awaiting tmux session", [selectedSession]);
+  const sessionLabel = useMemo(() => selectedShell ?? "Awaiting shell", [selectedShell]);
 
   useEffect(() => {
     let cancelled = false;
 
     async function bootstrapSession() {
-      const existingSessionId = readStoredTerminalSessionId();
-      const url = existingSessionId
-        ? `/api/session/bootstrap?sessionId=${encodeURIComponent(existingSessionId)}`
-        : "/api/session/bootstrap";
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        throw new Error("Unable to bootstrap terminal session.");
-      }
-
-      const data = (await response.json()) as BootstrapResponse;
+      const sessionId = await ensureTerminalSessionId();
 
       if (!cancelled) {
-        storeTerminalSessionId(data.sessionId);
-        setSessionId(data.sessionId);
+        setSessionId(sessionId);
       }
     }
 
@@ -107,14 +92,14 @@ function TerminalPane({ selectedSession }: TerminalPaneProps) {
       return;
     }
 
-    if (!sessionId || !selectedSession) {
-      setConnectionState(sessionId ? "AWAITING SESSION" : "CONNECTING");
+    if (!sessionId || !selectedShell) {
+      setConnectionState(sessionId ? "AWAITING SHELL" : "CONNECTING");
       terminalRef.current.reset();
       return;
     }
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const socket = new WebSocket(`${protocol}//${window.location.host}/terminal/ws?sessionId=${encodeURIComponent(sessionId)}&session=${encodeURIComponent(selectedSession)}`);
+    const socket = new WebSocket(`${protocol}//${window.location.host}/terminal/ws?sessionId=${encodeURIComponent(sessionId)}&shellId=${encodeURIComponent(selectedShell)}`);
     socketRef.current = socket;
     setConnectionState("CONNECTING");
 
@@ -169,7 +154,7 @@ function TerminalPane({ selectedSession }: TerminalPaneProps) {
         socketRef.current = null;
       }
     };
-  }, [selectedSession, sessionId]);
+  }, [selectedShell, sessionId]);
 
   return (
     <div className="lcars-terminal-pane">

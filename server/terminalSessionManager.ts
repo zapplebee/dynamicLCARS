@@ -12,8 +12,14 @@ type TerminalSocket = {
   close: (code?: number, reason?: string) => void;
 };
 
-type ManagedTerminalConnection = {
-  sessionName: string;
+export type ShellSummary = {
+  id: string;
+  label: string;
+};
+
+type ManagedShellConnection = {
+  shellId: string;
+  label: string;
   ptyProcess: IPty | null;
   socket: TerminalSocket | null;
   buffer: string;
@@ -22,22 +28,15 @@ type ManagedTerminalConnection = {
 
 type BrowserTerminalSession = {
   id: string;
-  selectedSession: string | null;
+  selectedShellId: string | null;
+  shellOrder: string[];
+  connections: Map<string, ManagedShellConnection>;
   lastSeenAt: number;
-  connections: Map<string, ManagedTerminalConnection>;
+  nextShellNumber: number;
 };
 
-function shellQuote(value: string) {
-  return `'${value.replace(/'/g, `"'"'`)}'`;
-}
-
-function buildRemoteCommand(sessionName: string) {
-  const script = [
-    `LCARS_SESSION=${shellQuote(sessionName)}`,
-    'exec tmux attach-session -t "$LCARS_SESSION" || exec ${SHELL:-/bin/bash} -l',
-  ].join("; ");
-
-  return `sh -lc ${shellQuote(script)}`;
+function buildRemoteCommand() {
+  return "sh -lc 'exec ${SHELL:-/bin/bash} -l'";
 }
 
 export class TerminalSessionManager {
@@ -49,59 +48,82 @@ export class TerminalSessionManager {
     return crypto.randomUUID();
   }
 
-  getSelectedSession(sessionId: string) {
-    return this.sessions.get(sessionId)?.selectedSession ?? null;
-  }
+  ensureSession(sessionId: string) {
+    const session = this.getOrCreateBrowserSession(sessionId);
 
-  touchSession(sessionId: string) {
-    const session = this.sessions.get(sessionId);
-
-    if (session) {
-      session.lastSeenAt = Date.now();
+    if (session.shellOrder.length === 0) {
+      this.createShell(sessionId);
     }
-  }
 
-  setSelectedSession(sessionId: string, selectedSession: string | null) {
-    const session = this.getOrCreateBrowserSession(sessionId, selectedSession);
-    session.selectedSession = selectedSession;
     session.lastSeenAt = Date.now();
-    return session.selectedSession;
+    return session;
   }
 
-  syncSessionPool(sessionId: string, sessionNames: string[], selectedSession: string | null) {
-    const browserSession = this.getOrCreateBrowserSession(sessionId, selectedSession);
-    const nextNames = new Set(sessionNames);
-
-    browserSession.selectedSession = selectedSession ?? browserSession.selectedSession;
-    browserSession.lastSeenAt = Date.now();
-
-    for (const sessionName of sessionNames) {
-      this.ensureConnection(browserSession, sessionName);
-    }
-
-    for (const [sessionName, connection] of browserSession.connections) {
-      if (nextNames.has(sessionName)) {
-        continue;
-      }
-
-      connection.socket?.close(1012, "tmux session removed");
-      connection.ptyProcess?.kill();
-      browserSession.connections.delete(sessionName);
-    }
-
-    return browserSession;
+  listShells(sessionId: string) {
+    const session = this.ensureSession(sessionId);
+    return session.shellOrder
+      .map((shellId) => session.connections.get(shellId))
+      .filter((shell): shell is ManagedShellConnection => Boolean(shell))
+      .map((shell) => ({ id: shell.shellId, label: shell.label }));
   }
 
-  attachSocket(sessionId: string, sessionName: string, socket: TerminalSocket) {
-    const browserSession = this.getOrCreateBrowserSession(sessionId, sessionName);
-    const connection = this.ensureConnection(browserSession, sessionName);
+  getSelectedShellId(sessionId: string) {
+    return this.ensureSession(sessionId).selectedShellId;
+  }
+
+  createShell(sessionId: string) {
+    const session = this.getOrCreateBrowserSession(sessionId);
+    const shellId = crypto.randomUUID();
+    const label = `SHELL ${session.nextShellNumber}`;
+
+    const connection: ManagedShellConnection = {
+      shellId,
+      label,
+      ptyProcess: null,
+      socket: null,
+      buffer: "",
+      lastSeenAt: Date.now(),
+    };
+
+    session.nextShellNumber += 1;
+    session.shellOrder.push(shellId);
+    session.connections.set(shellId, connection);
+
+    if (!session.selectedShellId) {
+      session.selectedShellId = shellId;
+    }
+
+    session.lastSeenAt = Date.now();
+    return { id: shellId, label } satisfies ShellSummary;
+  }
+
+  selectShell(sessionId: string, shellId: string) {
+    const session = this.ensureSession(sessionId);
+
+    if (!session.connections.has(shellId)) {
+      return null;
+    }
+
+    session.selectedShellId = shellId;
+    session.lastSeenAt = Date.now();
+    const shell = session.connections.get(shellId)!;
+    return { id: shell.shellId, label: shell.label } satisfies ShellSummary;
+  }
+
+  attachSocket(sessionId: string, shellId: string, socket: TerminalSocket) {
+    const session = this.ensureSession(sessionId);
+    const connection = this.ensureConnection(session, shellId);
+
+    if (!connection) {
+      return null;
+    }
 
     if (connection.socket && connection.socket !== socket && connection.socket.readyState === 1) {
       connection.socket.close(1012, "replaced by newer terminal client");
     }
 
-    browserSession.selectedSession = sessionName;
-    browserSession.lastSeenAt = Date.now();
+    session.selectedShellId = shellId;
+    session.lastSeenAt = Date.now();
     connection.socket = socket;
     connection.lastSeenAt = Date.now();
 
@@ -112,53 +134,61 @@ export class TerminalSessionManager {
     return connection;
   }
 
-  detachSocket(sessionId: string, sessionName: string, socket: TerminalSocket) {
-    const browserSession = this.sessions.get(sessionId);
-    const connection = browserSession?.connections.get(sessionName);
+  detachSocket(sessionId: string, shellId: string, socket: TerminalSocket) {
+    const session = this.sessions.get(sessionId);
+    const connection = session?.connections.get(shellId);
 
-    if (!browserSession || !connection || connection.socket !== socket) {
+    if (!session || !connection || connection.socket !== socket) {
       return;
     }
 
     connection.socket = null;
     connection.lastSeenAt = Date.now();
-    browserSession.lastSeenAt = Date.now();
+    session.lastSeenAt = Date.now();
   }
 
-  writeInput(sessionId: string, sessionName: string, data: string) {
-    const browserSession = this.sessions.get(sessionId);
-    const connection = browserSession?.connections.get(sessionName);
+  writeInput(sessionId: string, shellId: string, data: string) {
+    const session = this.sessions.get(sessionId);
+    const connection = session?.connections.get(shellId);
 
     connection?.ptyProcess?.write(data);
 
-    if (browserSession && connection) {
-      browserSession.lastSeenAt = Date.now();
+    if (session && connection) {
+      session.lastSeenAt = Date.now();
       connection.lastSeenAt = Date.now();
     }
   }
 
-  resize(sessionId: string, sessionName: string, cols: number, rows: number) {
-    const browserSession = this.sessions.get(sessionId);
-    const connection = browserSession?.connections.get(sessionName);
+  resize(sessionId: string, shellId: string, cols: number, rows: number) {
+    const session = this.sessions.get(sessionId);
+    const connection = session?.connections.get(shellId);
 
-    if (!browserSession || !connection?.ptyProcess) {
+    if (!session || !connection?.ptyProcess) {
       return;
     }
 
     connection.ptyProcess.resize(cols, rows);
     connection.lastSeenAt = Date.now();
-    browserSession.lastSeenAt = Date.now();
+    session.lastSeenAt = Date.now();
+  }
+
+  touchSession(sessionId: string) {
+    const session = this.sessions.get(sessionId);
+
+    if (session) {
+      session.lastSeenAt = Date.now();
+    }
   }
 
   cleanupExpiredSessions() {
     const now = Date.now();
 
-    for (const [sessionId, browserSession] of this.sessions) {
-      if (now - browserSession.lastSeenAt < this.config.sessionIdleTtlMs) {
+    for (const [sessionId, session] of this.sessions) {
+      if (now - session.lastSeenAt < this.config.sessionIdleTtlMs) {
         continue;
       }
 
-      for (const connection of browserSession.connections.values()) {
+      for (const connection of session.connections.values()) {
         connection.socket?.close(1001, "idle timeout");
         connection.ptyProcess?.kill();
       }
@@ -167,47 +197,38 @@ export class TerminalSessionManager {
     }
   }
 
-  private getOrCreateBrowserSession(sessionId: string, selectedSession: string | null) {
+  private getOrCreateBrowserSession(sessionId: string) {
     const existing = this.sessions.get(sessionId);
 
     if (existing) {
-      if (selectedSession) {
-        existing.selectedSession = selectedSession;
-      }
-
       return existing;
     }
 
-    const nextSession: BrowserTerminalSession = {
+    const session: BrowserTerminalSession = {
       id: sessionId,
-      selectedSession,
-      lastSeenAt: Date.now(),
+      selectedShellId: null,
+      shellOrder: [],
       connections: new Map(),
+      lastSeenAt: Date.now(),
+      nextShellNumber: 1,
     };
 
-    this.sessions.set(sessionId, nextSession);
-    return nextSession;
+    this.sessions.set(sessionId, session);
+    return session;
   }
 
-  private ensureConnection(browserSession: BrowserTerminalSession, sessionName: string) {
-    const existing = browserSession.connections.get(sessionName);
+  private ensureConnection(session: BrowserTerminalSession, shellId: string) {
+    const connection = session.connections.get(shellId);
 
-    if (existing?.ptyProcess) {
-      return existing;
+    if (!connection) {
+      return null;
     }
 
-    const connection: ManagedTerminalConnection = existing ?? {
-      sessionName,
-      ptyProcess: null,
-      socket: null,
-      buffer: "",
-      lastSeenAt: Date.now(),
-    };
+    if (connection.ptyProcess) {
+      return connection;
+    }
 
-    connection.sessionName = sessionName;
-    connection.lastSeenAt = Date.now();
-
-    const ptyProcess = pty.spawn("ssh", ["-tt", ...buildSshArgs(this.config, buildRemoteCommand(sessionName))], {
+    const ptyProcess = pty.spawn("ssh", ["-tt", ...buildSshArgs(this.config, buildRemoteCommand())], {
       name: "xterm-256color",
       cols: 120,
       rows: 40,
@@ -219,7 +240,7 @@ export class TerminalSessionManager {
 
     ptyProcess.onData((chunk) => {
       connection.lastSeenAt = Date.now();
-      browserSession.lastSeenAt = Date.now();
+      session.lastSeenAt = Date.now();
       connection.buffer = `${connection.buffer}${chunk}`.slice(-MAX_BUFFER_LENGTH);
 
       if (connection.socket && connection.socket.readyState === 1) {
@@ -232,7 +253,6 @@ export class TerminalSessionManager {
       connection.socket = null;
     });
 
-    browserSession.connections.set(sessionName, connection);
     return connection;
   }
 }

@@ -5,16 +5,15 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { createNodeWebSocket } from "@hono/node-ws";
 import { Hono } from "hono";
 import { loadConfig } from "./config";
-import { ensureCurrentSelectedSession, getCurrentSelectedSession, listTmuxSessions, setCurrentSelectedSession } from "./ssh";
 import { TerminalSessionManager } from "./terminalSessionManager";
-
-type SelectRequest = {
-  session?: string;
-  sessionId?: string;
-};
 
 type BootstrapResponse = {
   sessionId: string;
+};
+
+type ShellRequest = {
+  sessionId?: string;
+  shellId?: string;
 };
 
 const config = loadConfig();
@@ -28,78 +27,72 @@ app.get("/api/health", (c) => c.json({ ok: true }));
 app.get("/api/session/bootstrap", (c) => {
   const existingSessionId = c.req.query("sessionId")?.trim();
   const sessionId = existingSessionId || terminalSessions.createSessionId();
+  terminalSessions.ensureSession(sessionId);
+
   const body: BootstrapResponse = { sessionId };
   return c.json(body);
 });
 
-app.get("/api/tmux/sessions", async (c) => {
+app.get("/api/shells", (c) => {
   const sessionId = c.req.query("sessionId")?.trim();
-  const sessions = await listTmuxSessions(config);
-
-  if (sessionId) {
-    const selectedSession = terminalSessions.getSelectedSession(sessionId) ?? await ensureCurrentSelectedSession(config);
-    terminalSessions.syncSessionPool(sessionId, sessions.map((session) => session.name), selectedSession);
-  }
-
-  return c.json({ sessions });
-});
-
-app.get("/api/tmux/current", async (c) => {
-  const currentSession = await ensureCurrentSelectedSession(config);
-  return c.json({ currentSession });
-});
-
-app.post("/api/tmux/select", async (c) => {
-  const body = (await c.req.json()) as SelectRequest;
-  const session = body.session?.trim();
-
-  if (!session) {
-    return c.json({ error: "Session is required." }, 400);
-  }
-
-  const sessions = await listTmuxSessions(config);
-
-  if (!sessions.some((entry) => entry.name === session)) {
-    return c.json({ error: "Unknown tmux session." }, 404);
-  }
-
-  const sessionId = body.sessionId?.trim();
-
-  await setCurrentSelectedSession(config, session);
-
-  if (sessionId) {
-    terminalSessions.setSelectedSession(sessionId, session);
-    terminalSessions.syncSessionPool(sessionId, sessions.map((entry) => entry.name), session);
-  }
-
-  return c.json({ currentSession: session });
-});
-
-app.get("/terminal/ws", upgradeWebSocket(async (c) => {
-  const sessionId = c.req.query("sessionId")?.trim();
-  const requestedSession = c.req.query("session")?.trim();
 
   if (!sessionId) {
-    throw new Error("Terminal session id is required.");
+    return c.json({ error: "Terminal session id is required." }, 400);
   }
 
-  const selectedSession = requestedSession || terminalSessions.getSelectedSession(sessionId) || await ensureCurrentSelectedSession(config);
+  const shells = terminalSessions.listShells(sessionId);
+  const currentShellId = terminalSessions.getSelectedShellId(sessionId);
+  return c.json({ shells, currentShellId });
+});
 
-  if (!selectedSession) {
-    throw new Error("No tmux sessions are available.");
+app.post("/api/shells", async (c) => {
+  const body = (await c.req.json()) as ShellRequest;
+  const sessionId = body.sessionId?.trim();
+
+  if (!sessionId) {
+    return c.json({ error: "Terminal session id is required." }, 400);
   }
 
-  const sessions = await listTmuxSessions(config);
+  const shell = terminalSessions.createShell(sessionId);
+  terminalSessions.selectShell(sessionId, shell.id);
+  return c.json({ shell, currentShellId: shell.id });
+});
 
-  if (!sessions.some((session) => session.name === selectedSession)) {
-    throw new Error("Unknown tmux session.");
+app.post("/api/shells/select", async (c) => {
+  const body = (await c.req.json()) as ShellRequest;
+  const sessionId = body.sessionId?.trim();
+  const shellId = body.shellId?.trim();
+
+  if (!sessionId || !shellId) {
+    return c.json({ error: "Terminal session id and shell id are required." }, 400);
   }
 
-  terminalSessions.syncSessionPool(sessionId, sessions.map((session) => session.name), selectedSession);
+  const shell = terminalSessions.selectShell(sessionId, shellId);
+
+  if (!shell) {
+    return c.json({ error: "Unknown shell." }, 404);
+  }
+
+  return c.json({ currentShellId: shell.id });
+});
+
+app.get("/terminal/ws", upgradeWebSocket((c) => {
+  const sessionId = c.req.query("sessionId")?.trim();
+  const shellId = c.req.query("shellId")?.trim();
+
+  if (!sessionId || !shellId) {
+    throw new Error("Terminal session id and shell id are required.");
+  }
+
+  terminalSessions.ensureSession(sessionId);
+
+  if (!terminalSessions.selectShell(sessionId, shellId)) {
+    throw new Error("Unknown shell.");
+  }
 
   return {
     onOpen(_, websocket) {
-      terminalSessions.attachSocket(sessionId, selectedSession, websocket);
+      terminalSessions.attachSocket(sessionId, shellId, websocket);
     },
     onMessage(event) {
       const message = JSON.parse(typeof event.data === "string" ? event.data : "{}") as {
@@ -110,11 +103,11 @@ app.get("/terminal/ws", upgradeWebSocket(async (c) => {
       };
 
       if (message.type === "input" && typeof message.data === "string") {
-        terminalSessions.writeInput(sessionId, selectedSession, message.data);
+        terminalSessions.writeInput(sessionId, shellId, message.data);
       }
 
       if (message.type === "resize" && typeof message.cols === "number" && typeof message.rows === "number") {
-        terminalSessions.resize(sessionId, selectedSession, message.cols, message.rows);
+        terminalSessions.resize(sessionId, shellId, message.cols, message.rows);
       }
 
       if (message.type === "ping") {
@@ -122,7 +115,7 @@ app.get("/terminal/ws", upgradeWebSocket(async (c) => {
       }
     },
     onClose(_, websocket) {
-      terminalSessions.detachSocket(sessionId, selectedSession, websocket);
+      terminalSessions.detachSocket(sessionId, shellId, websocket);
     },
     onError(error) {
       console.error("terminal websocket error", error);
@@ -145,7 +138,7 @@ setInterval(() => {
 const server = serve({
   fetch: app.fetch,
   port: config.httpPort,
-}, (info) => {
+}, () => {
   console.log(`LCARS server listening on http://127.0.0.1:${config.httpPort}`);
 });
 

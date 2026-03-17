@@ -3,7 +3,7 @@ import type { ToolRoute } from "./ToolCommands";
 
 type MainViewProps = {
   selectedTool: ToolRoute;
-  selectedSession: string | null;
+  selectedShell: string | null;
 };
 
 const ROUTE_COPY: Record<Exclude<ToolRoute, "shell">, { title: string; detail: string }> = {
@@ -25,9 +25,9 @@ const ROUTE_COPY: Record<Exclude<ToolRoute, "shell">, { title: string; detail: s
   },
 };
 
-function MainView({ selectedTool, selectedSession }: MainViewProps) {
+function MainView({ selectedTool, selectedShell }: MainViewProps) {
   if (selectedTool === "shell") {
-    return <TerminalPane selectedSession={selectedSession} />;
+    return <TerminalPane selectedShell={selectedShell} />;
   }
 
   const route = ROUTE_COPY[selectedTool];
@@ -38,8 +38,8 @@ function MainView({ selectedTool, selectedSession }: MainViewProps) {
       <h1 className="lcars-route-panel__title">{route.title}</h1>
       <p className="lcars-route-panel__detail">{route.detail}</p>
       <div className="lcars-route-panel__status">
-        <span className="lcars-route-panel__status-label">Selected tmux session</span>
-        <span className="lcars-route-panel__status-value">{selectedSession ?? "Awaiting session"}</span>
+        <span className="lcars-route-panel__status-label">Selected shell</span>
+        <span className="lcars-route-panel__status-value">{selectedShell ?? "Awaiting shell"}</span>
       </div>
     </section>
   );
