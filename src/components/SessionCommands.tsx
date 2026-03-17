@@ -34,13 +34,15 @@ function SessionCommands({ currentSession, onCurrentSessionChange }: SessionComm
   const [pendingSession, setPendingSession] = useState<string | null>(null);
 
   const loadState = useCallback(async (showLoading: boolean) => {
+    const sessionId = readStoredTerminalSessionId();
+
     if (showLoading) {
       setLoading(true);
     }
 
     try {
       const [sessionsResponse, currentResponse] = await Promise.all([
-        fetch("/api/tmux/sessions"),
+        fetch(sessionId ? `/api/tmux/sessions?sessionId=${encodeURIComponent(sessionId)}` : "/api/tmux/sessions"),
         fetch("/api/tmux/current"),
       ]);
 

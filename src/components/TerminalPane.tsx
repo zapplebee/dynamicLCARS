@@ -103,19 +103,29 @@ function TerminalPane({ selectedSession }: TerminalPaneProps) {
   }, []);
 
   useEffect(() => {
-    if (!sessionId || !terminalRef.current) {
+    if (!terminalRef.current) {
+      return;
+    }
+
+    if (!sessionId || !selectedSession) {
+      setConnectionState(sessionId ? "AWAITING SESSION" : "CONNECTING");
+      terminalRef.current.reset();
       return;
     }
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const socket = new WebSocket(`${protocol}//${window.location.host}/terminal/ws?sessionId=${encodeURIComponent(sessionId)}`);
+    const socket = new WebSocket(`${protocol}//${window.location.host}/terminal/ws?sessionId=${encodeURIComponent(sessionId)}&session=${encodeURIComponent(selectedSession)}`);
     socketRef.current = socket;
     setConnectionState("CONNECTING");
 
     const terminal = terminalRef.current;
     const fitAddon = fitRef.current;
+    terminal.reset();
+
     const inputDisposable = terminal.onData((data) => {
-      socket.send(JSON.stringify({ type: "input", data }));
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "input", data }));
+      }
     });
 
     socket.addEventListener("open", () => {
@@ -137,7 +147,7 @@ function TerminalPane({ selectedSession }: TerminalPaneProps) {
     });
 
     socket.addEventListener("close", () => {
-      setConnectionState("RECONNECT REQUIRED");
+      setConnectionState("SESSION OFFLINE");
     });
 
     socket.addEventListener("error", () => {
@@ -159,7 +169,7 @@ function TerminalPane({ selectedSession }: TerminalPaneProps) {
         socketRef.current = null;
       }
     };
-  }, [sessionId]);
+  }, [selectedSession, sessionId]);
 
   return (
     <div className="lcars-terminal-pane">

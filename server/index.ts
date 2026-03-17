@@ -5,7 +5,7 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { createNodeWebSocket } from "@hono/node-ws";
 import { Hono } from "hono";
 import { loadConfig } from "./config";
-import { getCurrentSelectedSession, listTmuxSessions, setCurrentSelectedSession } from "./ssh";
+import { ensureCurrentSelectedSession, getCurrentSelectedSession, listTmuxSessions, setCurrentSelectedSession } from "./ssh";
 import { TerminalSessionManager } from "./terminalSessionManager";
 
 type SelectRequest = {
@@ -33,12 +33,19 @@ app.get("/api/session/bootstrap", (c) => {
 });
 
 app.get("/api/tmux/sessions", async (c) => {
+  const sessionId = c.req.query("sessionId")?.trim();
   const sessions = await listTmuxSessions(config);
+
+  if (sessionId) {
+    const selectedSession = terminalSessions.getSelectedSession(sessionId) ?? await ensureCurrentSelectedSession(config);
+    terminalSessions.syncSessionPool(sessionId, sessions.map((session) => session.name), selectedSession);
+  }
+
   return c.json({ sessions });
 });
 
 app.get("/api/tmux/current", async (c) => {
-  const currentSession = await getCurrentSelectedSession(config);
+  const currentSession = await ensureCurrentSelectedSession(config);
   return c.json({ currentSession });
 });
 
@@ -57,12 +64,12 @@ app.post("/api/tmux/select", async (c) => {
   }
 
   const sessionId = body.sessionId?.trim();
-  const terminalSession = sessionId ? terminalSessions.getSessionRecord(sessionId) : null;
 
-  await setCurrentSelectedSession(config, session, terminalSession?.viewerTty);
+  await setCurrentSelectedSession(config, session);
 
   if (sessionId) {
-    await terminalSessions.retargetSession(sessionId, session);
+    terminalSessions.setSelectedSession(sessionId, session);
+    terminalSessions.syncSessionPool(sessionId, sessions.map((entry) => entry.name), session);
   }
 
   return c.json({ currentSession: session });
@@ -70,17 +77,29 @@ app.post("/api/tmux/select", async (c) => {
 
 app.get("/terminal/ws", upgradeWebSocket(async (c) => {
   const sessionId = c.req.query("sessionId")?.trim();
+  const requestedSession = c.req.query("session")?.trim();
 
   if (!sessionId) {
     throw new Error("Terminal session id is required.");
   }
 
-  const selectedSession = await getCurrentSelectedSession(config);
-  await terminalSessions.ensureSession(sessionId, selectedSession);
+  const selectedSession = requestedSession || terminalSessions.getSelectedSession(sessionId) || await ensureCurrentSelectedSession(config);
+
+  if (!selectedSession) {
+    throw new Error("No tmux sessions are available.");
+  }
+
+  const sessions = await listTmuxSessions(config);
+
+  if (!sessions.some((session) => session.name === selectedSession)) {
+    throw new Error("Unknown tmux session.");
+  }
+
+  terminalSessions.syncSessionPool(sessionId, sessions.map((session) => session.name), selectedSession);
 
   return {
     onOpen(_, websocket) {
-      terminalSessions.attachSocket(sessionId, websocket);
+      terminalSessions.attachSocket(sessionId, selectedSession, websocket);
     },
     onMessage(event) {
       const message = JSON.parse(typeof event.data === "string" ? event.data : "{}") as {
@@ -91,11 +110,11 @@ app.get("/terminal/ws", upgradeWebSocket(async (c) => {
       };
 
       if (message.type === "input" && typeof message.data === "string") {
-        terminalSessions.writeInput(sessionId, message.data);
+        terminalSessions.writeInput(sessionId, selectedSession, message.data);
       }
 
       if (message.type === "resize" && typeof message.cols === "number" && typeof message.rows === "number") {
-        terminalSessions.resize(sessionId, message.cols, message.rows);
+        terminalSessions.resize(sessionId, selectedSession, message.cols, message.rows);
       }
 
       if (message.type === "ping") {
@@ -103,7 +122,7 @@ app.get("/terminal/ws", upgradeWebSocket(async (c) => {
       }
     },
     onClose(_, websocket) {
-      terminalSessions.detachSocket(sessionId, websocket);
+      terminalSessions.detachSocket(sessionId, selectedSession, websocket);
     },
     onError(error) {
       console.error("terminal websocket error", error);

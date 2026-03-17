@@ -4,22 +4,7 @@ import pty, { type IPty } from "node-pty";
 import type { RuntimeConfig } from "./config";
 import { buildSshArgs } from "./ssh";
 
-const VIEWER_TTY_MARKER = "__LCARS_VIEWER_TTY__:";
 const MAX_BUFFER_LENGTH = 64_000;
-
-export type TerminalSessionRecord = {
-  id: string;
-  selectedSession: string | null;
-  viewerTty: string | null;
-  lastSeenAt: number;
-};
-
-type ManagedTerminalSession = TerminalSessionRecord & {
-  ptyProcess: IPty | null;
-  socket: TerminalSocket | null;
-  buffer: string;
-  outputPrefix: string;
-};
 
 type TerminalSocket = {
   readyState: number;
@@ -27,26 +12,31 @@ type TerminalSocket = {
   close: (code?: number, reason?: string) => void;
 };
 
+type ManagedTerminalConnection = {
+  sessionName: string;
+  ptyProcess: IPty | null;
+  socket: TerminalSocket | null;
+  buffer: string;
+  lastSeenAt: number;
+};
+
+type BrowserTerminalSession = {
+  id: string;
+  selectedSession: string | null;
+  lastSeenAt: number;
+  connections: Map<string, ManagedTerminalConnection>;
+};
+
 function shellQuote(value: string) {
-  return `'${value.replace(/'/g, `'"'"'`)}'`;
+  return `'${value.replace(/'/g, `"'"'`)}'`;
 }
 
-function buildRemoteCommand(selectedSession: string | null) {
-  const attachScript = selectedSession
-    ? `exec tmux attach-session -t ${shellQuote(selectedSession)}`
-    : "first_session=$(tmux list-sessions -F '#{session_name}' 2>/dev/null | sort | head -n 1); if [ -n \"$first_session\" ]; then exec tmux attach-session -t \"$first_session\"; else exec ${SHELL:-/bin/bash} -l; fi";
-
-  const script = [
-    'viewer_tty="${SSH_TTY:-$(tty)}"',
-    `printf '${VIEWER_TTY_MARKER}%s\\r\\n' "$viewer_tty"`,
-    attachScript,
-  ].join("; ");
-
-  return `sh -lc ${shellQuote(script)}`;
+function buildRemoteCommand(sessionName: string) {
+  return `sh -lc ${shellQuote(`exec tmux attach-session -t ${shellQuote(sessionName)} || exec \${SHELL:-/bin/bash} -l`)}`;
 }
 
 export class TerminalSessionManager {
-  private readonly sessions = new Map<string, ManagedTerminalSession>();
+  private readonly sessions = new Map<string, BrowserTerminalSession>();
 
   constructor(private readonly config: RuntimeConfig) {}
 
@@ -54,23 +44,8 @@ export class TerminalSessionManager {
     return crypto.randomUUID();
   }
 
-  getSession(sessionId: string) {
-    return this.sessions.get(sessionId) ?? null;
-  }
-
-  getSessionRecord(sessionId: string): TerminalSessionRecord | null {
-    const session = this.sessions.get(sessionId);
-
-    if (!session) {
-      return null;
-    }
-
-    return {
-      id: session.id,
-      selectedSession: session.selectedSession,
-      viewerTty: session.viewerTty,
-      lastSeenAt: session.lastSeenAt,
-    };
+  getSelectedSession(sessionId: string) {
+    return this.sessions.get(sessionId)?.selectedSession ?? null;
   }
 
   touchSession(sessionId: string) {
@@ -81,38 +56,153 @@ export class TerminalSessionManager {
     }
   }
 
-  async ensureSession(sessionId: string, selectedSession: string | null) {
+  setSelectedSession(sessionId: string, selectedSession: string | null) {
+    const session = this.getOrCreateBrowserSession(sessionId, selectedSession);
+    session.selectedSession = selectedSession;
+    session.lastSeenAt = Date.now();
+    return session.selectedSession;
+  }
+
+  syncSessionPool(sessionId: string, sessionNames: string[], selectedSession: string | null) {
+    const browserSession = this.getOrCreateBrowserSession(sessionId, selectedSession);
+    const nextNames = new Set(sessionNames);
+
+    browserSession.selectedSession = selectedSession ?? browserSession.selectedSession;
+    browserSession.lastSeenAt = Date.now();
+
+    for (const sessionName of sessionNames) {
+      this.ensureConnection(browserSession, sessionName);
+    }
+
+    for (const [sessionName, connection] of browserSession.connections) {
+      if (nextNames.has(sessionName)) {
+        continue;
+      }
+
+      connection.socket?.close(1012, "tmux session removed");
+      connection.ptyProcess?.kill();
+      browserSession.connections.delete(sessionName);
+    }
+
+    return browserSession;
+  }
+
+  attachSocket(sessionId: string, sessionName: string, socket: TerminalSocket) {
+    const browserSession = this.getOrCreateBrowserSession(sessionId, sessionName);
+    const connection = this.ensureConnection(browserSession, sessionName);
+
+    if (connection.socket && connection.socket !== socket && connection.socket.readyState === 1) {
+      connection.socket.close(1012, "replaced by newer terminal client");
+    }
+
+    browserSession.selectedSession = sessionName;
+    browserSession.lastSeenAt = Date.now();
+    connection.socket = socket;
+    connection.lastSeenAt = Date.now();
+
+    if (connection.buffer) {
+      socket.send(JSON.stringify({ type: "output", data: connection.buffer }));
+    }
+
+    return connection;
+  }
+
+  detachSocket(sessionId: string, sessionName: string, socket: TerminalSocket) {
+    const browserSession = this.sessions.get(sessionId);
+    const connection = browserSession?.connections.get(sessionName);
+
+    if (!browserSession || !connection || connection.socket !== socket) {
+      return;
+    }
+
+    connection.socket = null;
+    connection.lastSeenAt = Date.now();
+    browserSession.lastSeenAt = Date.now();
+  }
+
+  writeInput(sessionId: string, sessionName: string, data: string) {
+    const browserSession = this.sessions.get(sessionId);
+    const connection = browserSession?.connections.get(sessionName);
+
+    connection?.ptyProcess?.write(data);
+
+    if (browserSession && connection) {
+      browserSession.lastSeenAt = Date.now();
+      connection.lastSeenAt = Date.now();
+    }
+  }
+
+  resize(sessionId: string, sessionName: string, cols: number, rows: number) {
+    const browserSession = this.sessions.get(sessionId);
+    const connection = browserSession?.connections.get(sessionName);
+
+    if (!browserSession || !connection?.ptyProcess) {
+      return;
+    }
+
+    connection.ptyProcess.resize(cols, rows);
+    connection.lastSeenAt = Date.now();
+    browserSession.lastSeenAt = Date.now();
+  }
+
+  cleanupExpiredSessions() {
+    const now = Date.now();
+
+    for (const [sessionId, browserSession] of this.sessions) {
+      if (now - browserSession.lastSeenAt < this.config.sessionIdleTtlMs) {
+        continue;
+      }
+
+      for (const connection of browserSession.connections.values()) {
+        connection.socket?.close(1001, "idle timeout");
+        connection.ptyProcess?.kill();
+      }
+
+      this.sessions.delete(sessionId);
+    }
+  }
+
+  private getOrCreateBrowserSession(sessionId: string, selectedSession: string | null) {
     const existing = this.sessions.get(sessionId);
 
-    if (existing && existing.ptyProcess) {
-      existing.selectedSession = selectedSession ?? existing.selectedSession;
-      existing.lastSeenAt = Date.now();
+    if (existing) {
+      if (selectedSession) {
+        existing.selectedSession = selectedSession;
+      }
+
       return existing;
     }
 
-    const nextSession: ManagedTerminalSession = existing ?? {
+    const nextSession: BrowserTerminalSession = {
       id: sessionId,
       selectedSession,
-      viewerTty: null,
       lastSeenAt: Date.now(),
+      connections: new Map(),
+    };
+
+    this.sessions.set(sessionId, nextSession);
+    return nextSession;
+  }
+
+  private ensureConnection(browserSession: BrowserTerminalSession, sessionName: string) {
+    const existing = browserSession.connections.get(sessionName);
+
+    if (existing?.ptyProcess) {
+      return existing;
+    }
+
+    const connection: ManagedTerminalConnection = existing ?? {
+      sessionName,
       ptyProcess: null,
       socket: null,
       buffer: "",
-      outputPrefix: "",
+      lastSeenAt: Date.now(),
     };
 
-    nextSession.selectedSession = selectedSession;
-    nextSession.lastSeenAt = Date.now();
-    nextSession.viewerTty = null;
-    nextSession.buffer = "";
-    nextSession.outputPrefix = "";
+    connection.sessionName = sessionName;
+    connection.lastSeenAt = Date.now();
 
-    const args = [
-      "-tt",
-      ...buildSshArgs(this.config, buildRemoteCommand(selectedSession)),
-    ];
-
-    const ptyProcess = pty.spawn("ssh", args, {
+    const ptyProcess = pty.spawn("ssh", ["-tt", ...buildSshArgs(this.config, buildRemoteCommand(sessionName))], {
       name: "xterm-256color",
       cols: 120,
       rows: 40,
@@ -120,132 +210,24 @@ export class TerminalSessionManager {
       env: process.env,
     });
 
-    nextSession.ptyProcess = ptyProcess;
+    connection.ptyProcess = ptyProcess;
 
     ptyProcess.onData((chunk) => {
-      nextSession.lastSeenAt = Date.now();
-      const rendered = this.consumeOutput(nextSession, chunk);
+      connection.lastSeenAt = Date.now();
+      browserSession.lastSeenAt = Date.now();
+      connection.buffer = `${connection.buffer}${chunk}`.slice(-MAX_BUFFER_LENGTH);
 
-      if (rendered.length === 0) {
-        return;
-      }
-
-      nextSession.buffer = `${nextSession.buffer}${rendered}`.slice(-MAX_BUFFER_LENGTH);
-
-      if (nextSession.socket && nextSession.socket.readyState === 1) {
-        nextSession.socket.send(JSON.stringify({ type: "output", data: rendered }));
+      if (connection.socket && connection.socket.readyState === 1) {
+        connection.socket.send(JSON.stringify({ type: "output", data: chunk }));
       }
     });
 
     ptyProcess.onExit(() => {
-      nextSession.ptyProcess = null;
-      nextSession.socket = null;
-      nextSession.viewerTty = null;
+      connection.ptyProcess = null;
+      connection.socket = null;
     });
 
-    this.sessions.set(sessionId, nextSession);
-    return nextSession;
-  }
-
-  attachSocket(sessionId: string, socket: TerminalSocket) {
-    const session = this.sessions.get(sessionId);
-
-    if (!session) {
-      return null;
-    }
-
-    session.socket = socket;
-    session.lastSeenAt = Date.now();
-
-    if (session.buffer) {
-      socket.send(JSON.stringify({ type: "output", data: session.buffer }));
-    }
-
-    return session;
-  }
-
-  detachSocket(sessionId: string, socket: TerminalSocket) {
-    const session = this.sessions.get(sessionId);
-
-    if (session?.socket === socket) {
-      session.socket = null;
-      session.lastSeenAt = Date.now();
-    }
-  }
-
-  writeInput(sessionId: string, data: string) {
-    const session = this.sessions.get(sessionId);
-    session?.ptyProcess?.write(data);
-    if (session) {
-      session.lastSeenAt = Date.now();
-    }
-  }
-
-  resize(sessionId: string, cols: number, rows: number) {
-    const session = this.sessions.get(sessionId);
-
-    if (!session?.ptyProcess) {
-      return;
-    }
-
-    session.ptyProcess.resize(cols, rows);
-    session.lastSeenAt = Date.now();
-  }
-
-  async retargetSession(sessionId: string, selectedSession: string | null) {
-    const session = this.sessions.get(sessionId);
-
-    if (!session) {
-      return null;
-    }
-
-    session.selectedSession = selectedSession;
-    session.lastSeenAt = Date.now();
-    return session;
-  }
-
-  cleanupExpiredSessions() {
-    const now = Date.now();
-
-    for (const [sessionId, session] of this.sessions) {
-      if (now - session.lastSeenAt < this.config.sessionIdleTtlMs) {
-        continue;
-      }
-
-      session.socket?.close();
-      session.ptyProcess?.kill();
-      this.sessions.delete(sessionId);
-    }
-  }
-
-  private consumeOutput(session: ManagedTerminalSession, chunk: string) {
-    const next = `${session.outputPrefix}${chunk}`;
-    const lines = next.split(/\r?\n/);
-    session.outputPrefix = lines.pop() ?? "";
-
-    const renderedLines = lines.filter((line) => {
-      if (line.startsWith(VIEWER_TTY_MARKER)) {
-        session.viewerTty = line.slice(VIEWER_TTY_MARKER.length).trim() || null;
-        return false;
-      }
-
-      return true;
-    });
-
-    const suffix = chunk.endsWith("\n") || chunk.endsWith("\r") ? "" : session.outputPrefix;
-    if (suffix && !suffix.startsWith(VIEWER_TTY_MARKER)) {
-      session.outputPrefix = suffix;
-    } else if (suffix.startsWith(VIEWER_TTY_MARKER)) {
-      session.viewerTty = suffix.slice(VIEWER_TTY_MARKER.length).trim() || null;
-      session.outputPrefix = "";
-    }
-
-    const rendered = renderedLines.join("\r\n");
-
-    if (chunk.endsWith("\n") || chunk.endsWith("\r")) {
-      return rendered ? `${rendered}\r\n` : "";
-    }
-
-    return rendered;
+    browserSession.connections.set(sessionName, connection);
+    return connection;
   }
 }

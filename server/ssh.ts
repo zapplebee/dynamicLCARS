@@ -93,12 +93,29 @@ export async function getCurrentSelectedSession(config: RuntimeConfig) {
   return sessions.some((session) => session.name === current) ? current : null;
 }
 
-export async function setCurrentSelectedSession(config: RuntimeConfig, session: string, viewerTty?: string | null) {
+export async function ensureCurrentSelectedSession(config: RuntimeConfig) {
+  const current = await getCurrentSelectedSession(config);
+
+  if (current) {
+    return current;
+  }
+
+  const sessions = await listTmuxSessions(config);
+  const fallback = sessions[0]?.name ?? null;
+
+  if (!fallback) {
+    return null;
+  }
+
+  await setCurrentSelectedSession(config, fallback);
+  return fallback;
+}
+
+export async function setCurrentSelectedSession(config: RuntimeConfig, session: string) {
   const quotedSession = shellQuote(session);
   const command = [
     `selected=${quotedSession}`,
     `printf '%s\\n' "$selected" > ${SELECTED_SESSION_FILE}`,
-    viewerTty ? `tmux switch-client -c ${shellQuote(viewerTty)} -t "$selected" >/dev/null 2>&1 || true` : "true",
   ].join("\n");
 
   await runRemote(config, command);
