@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { readStoredTerminalSessionId } from "../browserSession";
 import Commands from "./Commands";
 import Button from "./Button";
 
@@ -82,7 +83,7 @@ function SessionCommands({ currentSession, onCurrentSessionChange }: SessionComm
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ session }),
+        body: JSON.stringify({ session, sessionId: readStoredTerminalSessionId() }),
       });
 
       if (!response.ok) {

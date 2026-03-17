@@ -1,0 +1,41 @@
+version: "1"
+
+secrets:
+  - name: docker_username
+    key: zapplebee/docker_username
+    engine: native
+    type: org
+  - name: docker_password
+    key: zapplebee/docker_password
+    engine: native
+    type: org
+
+
+steps:
+  # todo manage any prereqs
+
+  - name: publish-push
+    ruleset:
+      event: push
+      branch: main
+    image: target/vela-docker:latest
+    pull: always
+    secrets: [docker_username, docker_password]
+    parameters:
+      registry: harbor.prettybird.zapplebee.online
+      repo: harbor.prettybird.zapplebee.online/library/dynamic-lcars
+      tags:
+        - harbor.prettybird.zapplebee.online/library/dynamic-lcars:latest
+        - harbor.prettybird.zapplebee.online/library/dynamic-lcars:${VELA_BUILD_COMMIT:0:8}
+
+  - name: publish-tag
+    ruleset:
+      event: tag
+    image: target/vela-docker:latest
+    pull: always
+    secrets: [docker_username, docker_password]
+    parameters:
+      registry: harbor.prettybird.zapplebee.online
+      repo: harbor.prettybird.zapplebee.online/library/dynamic-lcars
+      tags:
+        - harbor.prettybird.zapplebee.online/library/dynamic-lcars:${VELA_BUILD_TAG##v}

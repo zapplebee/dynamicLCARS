@@ -1,26 +1,45 @@
 # dynamicLCARS
 
-This branch revives the original LCARS experiment as a React app.
+`dynamicLCARS` is a single-origin remote workstation UI: one web app, one mounted SSH key, one mounted `known_hosts`, and a remote machine that already has `tmux`, `git`, and `gh` installed.
 
-The legacy project used PHP to emit SVG fragments and jQuery plugins to animate them. The current app keeps the original LCARS font, palette, corner geometry, and fixed 1245 x 655 composition, but rebuilds the interface with reusable React components and modern CSS layout.
+## Runtime contract
 
-## Run
+The server expects these environment variables at runtime:
+
+- `LCARS_SSH_HOST`
+- `LCARS_SSH_USER`
+- `LCARS_SSH_KEY_PATH`
+- `LCARS_SSH_KNOWN_HOSTS_PATH`
+- `LCARS_HTTP_PORT` (optional, defaults to `3002`)
+- `LCARS_SESSION_IDLE_TTL_SECONDS` (optional, defaults to `1800`)
+
+The mounted private key and `known_hosts` file should be read-only.
+
+## Local development
+
+Install dependencies with Bun:
 
 ```bash
 bun install
-cat > .env.local <<'EOF'
-WETTY_SSH_PASS=your-temporary-password
-TMUX_SSH_PASS=your-temporary-password
-VITE_WETTY_SSH_PASS=your-temporary-password
-EOF
-bun run dev:wetty
-bun run dev:api
+```
+
+Run the frontend dev server:
+
+```bash
 bun run dev
 ```
 
-Then open the forwarded Vite preview on port `5173`. The app proxies the terminal
-pane to the local WeTTY Docker service on port `3001`, and proxies tmux control
-requests to the Bun bridge on port `3002`.
+Run the backend server in a second terminal:
+
+```bash
+export LCARS_SSH_HOST=example-host
+export LCARS_SSH_USER=zac
+export LCARS_SSH_KEY_PATH=/absolute/path/to/id_ed25519
+export LCARS_SSH_KNOWN_HOSTS_PATH=/absolute/path/to/known_hosts
+bun run dev:server
+```
+
+Open `http://127.0.0.1:5173`. Vite proxies `/api/*` and `/terminal/*` to the Node/Hono backend on port `3002`.
 
 ## Build
 
@@ -28,12 +47,39 @@ requests to the Bun bridge on port `3002`.
 bun run build
 ```
 
+This produces:
+
+- frontend assets in `dist/`
+- bundled Node server in `dist-server/`
+
+## Docker image
+
+Build the image:
+
+```bash
+docker build -t dynamic-lcars .
+```
+
+Run it with a mounted private key and mounted `known_hosts`:
+
+```bash
+docker run --rm -p 3002:3002 \
+  -e LCARS_SSH_HOST=example-host \
+  -e LCARS_SSH_USER=zac \
+  -e LCARS_SSH_KEY_PATH=/run/secrets/id_ed25519 \
+  -e LCARS_SSH_KNOWN_HOSTS_PATH=/run/secrets/known_hosts \
+  -e LCARS_SESSION_IDLE_TTL_SECONDS=1800 \
+  -v "$HOME/.ssh/id_ed25519:/run/secrets/id_ed25519:ro" \
+  -v "$HOME/.ssh/known_hosts:/run/secrets/known_hosts:ro" \
+  dynamic-lcars
+```
+
+Then open `http://127.0.0.1:3002`.
+
 ## Notes
 
-- The React source lives in [`src`](./src).
-- The LCARS webfont assets live in [`css/fontface`](./css/fontface) as `lcars.woff` and `lcars.ttf`.
-- The embedded terminal uses [WeTTY](https://github.com/butlerx/wetty) in Docker and connects to `zac@192.168.1.238` through the SSH config in `ops/wetty/config`.
-- `bun run dev:wetty` and `bun run dev:api` both read credentials from `.env.local` through Bun.
-- `bun run dev:api` starts the Bun tmux bridge that lists and switches remote sessions on `nyx`.
-- The tmux bridge uses the local `ops/ssh/askpass.sh` helper for temporary password auth, so `sshpass` is no longer required.
-- Install `ops/nyx/lcars-view` on `nyx` as `~/.local/bin/lcars-view` and make it executable so WeTTY always attaches to the selected tmux session.
+- The frontend lives in `src/`.
+- The Node/Hono backend lives in `server/`.
+- The terminal session is reconnectable per browser tab using `sessionStorage`.
+- Idle backend-managed sessions are cleaned up after 30 minutes by default.
+- SSH host verification is strict and depends on the mounted `known_hosts` file.

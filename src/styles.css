@@ -172,12 +172,23 @@ body {
   color: #ffd98f;
 }
 
-.lcars-terminal-pane__frame {
-  display: block;
-  width: 100%;
+.lcars-terminal-pane__status {
+  margin-left: auto;
+  font-size: 18px;
+  color: #ff9966;
+}
+
+.lcars-terminal-pane__terminal {
   flex: 1;
-  border: 0;
-  background: transparent;
+  min-height: 0;
+  padding: 0 18px 18px;
+}
+
+.lcars-terminal-pane__terminal .xterm {
+  height: 100%;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: rgba(2, 4, 10, 0.82);
 }
 
 .lcars-route-panel {
