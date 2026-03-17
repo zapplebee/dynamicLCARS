@@ -116,6 +116,7 @@ LCARS_SSH_KNOWN_HOSTS_PATH=/absolute/path/to/known_hosts \
 ```
 
 The compiled server still expects the built frontend assets in `dist/` next to the binary.
+It also expects the host to provide `ssh` and `script` from `util-linux` so it can allocate interactive shell sessions without Docker.
 
 ## Docker image
 

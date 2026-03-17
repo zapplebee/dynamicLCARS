@@ -31,7 +31,7 @@ RUN bun install --frozen-lockfile --production
 FROM node:24-bookworm-slim AS runtime
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssh-client \
+  && apt-get install -y --no-install-recommends openssh-client util-linux \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
