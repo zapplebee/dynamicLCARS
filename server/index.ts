@@ -15,6 +15,7 @@ type ShellRequest = {
   sessionId?: string;
   shellId?: string;
   command?: string;
+  data?: string;
 };
 
 const config = loadConfig();
@@ -93,6 +94,20 @@ app.post("/api/shells/exec", async (c) => {
   } catch (error) {
     return c.json({ error: error instanceof Error ? error.message : "Shell command failed." }, 500);
   }
+});
+
+app.post("/api/shells/input", async (c) => {
+  const body = (await c.req.json()) as ShellRequest;
+  const sessionId = body.sessionId?.trim();
+  const shellId = body.shellId?.trim();
+  const data = body.data;
+
+  if (!sessionId || !shellId || typeof data !== "string" || data.length === 0) {
+    return c.json({ error: "Terminal session id, shell id, and input data are required." }, 400);
+  }
+
+  terminalSessions.writeInput(sessionId, shellId, data);
+  return c.json({ ok: true });
 });
 
 app.get("/terminal/ws", upgradeWebSocket((c) => {

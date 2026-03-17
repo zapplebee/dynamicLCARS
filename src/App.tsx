@@ -5,6 +5,7 @@ import MainView from "./components/MainView";
 import Matrix from "./components/Matrix";
 import Pane from "./components/Pane";
 import SessionCommands from "./components/SessionCommands";
+import TerminalActionButtons from "./components/TerminalActionButtons";
 import ToolCommands, { type ToolRoute } from "./components/ToolCommands";
 import { STAGE_HEIGHT, STAGE_WIDTH } from "./theme";
 
@@ -22,9 +23,11 @@ function App() {
       <ToolCommands selectedTool={selectedTool} onSelectTool={setSelectedTool} />
 
       <Matrix>
-        <Pane gridWidth={8} gridHeight={11}>
+        <Pane gridWidth={8} gridHeight={selectedTool === "shell" ? 10 : 11}>
           <MainView selectedTool={selectedTool} selectedShell={selectedShell} />
         </Pane>
+
+        {selectedTool === "shell" ? <TerminalActionButtons selectedShell={selectedShell} /> : null}
       </Matrix>
 
       <SessionCommands currentShell={selectedShell} onCurrentShellChange={setSelectedShell} />
