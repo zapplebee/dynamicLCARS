@@ -32,5 +32,6 @@ test("publish push only runs from main", () => {
 test("validate ci config step runs before branch-specific validation", () => {
   const validateStep = getStep("validate-ci-config");
 
-  assert.match(validateStep.commands[0], /npm run test:ci-config/);
+  assert.match(validateStep.commands[0], /bun install --frozen-lockfile/);
+  assert.match(validateStep.commands[1], /bun run test:ci-config/);
 });

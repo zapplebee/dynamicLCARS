@@ -29,10 +29,11 @@ services:
 
 steps:
   - name: validate-ci-config
-    image: node:24-bookworm
+    image: oven/bun:1
     pull: always
     commands:
-      - cd ${VELA_WORKSPACE} && npm run test:ci-config
+      - cd ${VELA_WORKSPACE} && bun install --frozen-lockfile
+      - cd ${VELA_WORKSPACE} && bun run test:ci-config
 
   - name: wait-for-services
     ruleset:
