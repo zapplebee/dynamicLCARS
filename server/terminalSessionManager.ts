@@ -179,6 +179,9 @@ export class TerminalSessionManager {
     }
 
     const marker = `__LCARS_DONE_${crypto.randomUUID()}__`;
+    const disableEcho = process.env.LCARS_DISABLE_TTY_ECHO === "1"
+      ? "stty -echo >/dev/null 2>&1 || true; "
+      : "";
 
     return await new Promise<string>((resolve, reject) => {
       const timeoutId = setTimeout(() => {
@@ -187,7 +190,7 @@ export class TerminalSessionManager {
       }, 15000);
 
       connection.execRequests.push({ marker, resolve, reject, timeoutId });
-      connection.ptyProcess?.write(`${command}; printf '${marker}:%s\n' "$?"\n`);
+      connection.ptyProcess?.write(`${disableEcho}${command}; printf '${marker}:%s\n' "$?"\n`);
     });
   }
 
