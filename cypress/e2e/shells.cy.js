@@ -4,7 +4,15 @@ const terminalRows = ".xterm-rows";
 function typeInTerminal(command) {
   cy.get(terminalTextarea, { timeout: 30000 })
     .focus()
-    .type(`${command}{enter}`, {
+    .type(command, {
+      delay: 0,
+      force: true,
+      parseSpecialCharSequences: false,
+    });
+
+  cy.get(terminalTextarea, { timeout: 30000 })
+    .focus()
+    .type("{enter}", {
       delay: 0,
       force: true,
       parseSpecialCharSequences: true,
