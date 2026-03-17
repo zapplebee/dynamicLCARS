@@ -5,6 +5,7 @@ set -eu
 apk add --no-cache bash openssh-server >/dev/null
 
 adduser -D -s /bin/bash lcars
+passwd -d lcars >/dev/null 2>&1 || true
 mkdir -p /home/lcars/.ssh /run/sshd /etc/ssh
 
 cp "$VELA_WORKSPACE/tests/fixtures/ssh/id_ed25519.pub" /home/lcars/.ssh/authorized_keys

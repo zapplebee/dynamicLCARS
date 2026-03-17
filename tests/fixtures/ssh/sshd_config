@@ -5,7 +5,6 @@ AuthorizedKeysFile .ssh/authorized_keys
 PasswordAuthentication no
 KbdInteractiveAuthentication no
 ChallengeResponseAuthentication no
-UsePAM no
 PermitRootLogin no
 AllowUsers lcars
 PrintMotd no
