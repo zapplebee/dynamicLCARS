@@ -33,7 +33,7 @@ describe("shell sessions", () => {
     cy.contains("SHELL 2", { timeout: 10000 }).should("be.visible");
     cy.contains("SHELL 2").click();
 
-    typeInTerminal("printf 'TWO:%s\\n' \"${LCARS_MARKER:-missing}\"");
+    typeInTerminal("if [ -n \"$LCARS_MARKER\" ]; then printf 'TWO:%s\\n' \"$LCARS_MARKER\"; else printf 'TWO:missing\\n'; fi");
     cy.get(terminalRows).should("contain.text", "TWO:missing");
 
     cy.contains("SHELL 1").click();
