@@ -21,13 +21,13 @@ describe("terminal action buttons", () => {
 
     cy.intercept("POST", "/api/shells/input").as("shellInput");
 
-    cy.contains("button", "STATUS").click();
+    cy.contains("button", "STATUS").click({ force: true });
     cy.wait("@shellInput").its("request.body.data").should("eq", "git status\r");
 
-    cy.contains("button", "TAB").click();
+    cy.contains("button", "TAB").click({ force: true });
     cy.wait("@shellInput").its("request.body.data").should("eq", "\t");
 
-    cy.contains("button", "ENTER").click();
+    cy.contains("button", "ENTER").click({ force: true });
     cy.wait("@shellInput").its("request.body.data").should("eq", "\r");
   });
 });

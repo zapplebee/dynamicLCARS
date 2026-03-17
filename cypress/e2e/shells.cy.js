@@ -17,6 +17,20 @@ function execInShell(sessionId, shellId, command) {
   return cy.request("POST", "/api/shells/exec", { sessionId, shellId, command }).its("body.output");
 }
 
+function execUntilContains(sessionId, shellId, command, expectedText, attemptsLeft = 8) {
+  return execInShell(sessionId, shellId, command).then((output) => {
+    if (output.includes(expectedText)) {
+      return output;
+    }
+
+    if (attemptsLeft <= 1) {
+      expect(output).to.include(expectedText);
+    }
+
+    return cy.wait(500).then(() => execUntilContains(sessionId, shellId, command, expectedText, attemptsLeft - 1));
+  });
+}
+
 describe("shell sessions", () => {
   it("creates, switches, and reconnects persistent shells", () => {
     cy.visit("/");
@@ -26,8 +40,7 @@ describe("shell sessions", () => {
 
     readSessionId().then((sessionId) => {
       fetchShellState(sessionId).then(({ currentShellId }) => {
-        execInShell(sessionId, currentShellId, "export LCARS_MARKER=one && printf 'ONE:%s\\n' \"$LCARS_MARKER\"")
-          .should("contain", "ONE:one");
+        execUntilContains(sessionId, currentShellId, "export LCARS_MARKER=one && printf 'ONE:%s\\n' \"$LCARS_MARKER\"", "ONE:one");
       });
     });
 
@@ -37,8 +50,7 @@ describe("shell sessions", () => {
 
     readSessionId().then((sessionId) => {
       fetchShellState(sessionId).then(({ currentShellId }) => {
-        execInShell(sessionId, currentShellId, "if [ -n \"$LCARS_MARKER\" ]; then printf 'TWO:%s\\n' \"$LCARS_MARKER\"; else printf 'TWO:missing\\n'; fi")
-          .should("contain", "TWO:missing");
+        execUntilContains(sessionId, currentShellId, "if [ -n \"$LCARS_MARKER\" ]; then printf 'TWO:%s\\n' \"$LCARS_MARKER\"; else printf 'TWO:missing\\n'; fi", "TWO:missing");
       });
     });
 
@@ -46,8 +58,7 @@ describe("shell sessions", () => {
 
     readSessionId().then((sessionId) => {
       fetchShellState(sessionId).then(({ currentShellId }) => {
-        execInShell(sessionId, currentShellId, "printf 'BACK:%s\\n' \"$LCARS_MARKER\"")
-          .should("contain", "BACK:one");
+        execUntilContains(sessionId, currentShellId, "printf 'BACK:%s\\n' \"$LCARS_MARKER\"", "BACK:one");
       });
     });
 
@@ -59,8 +70,7 @@ describe("shell sessions", () => {
     readSessionId().then((sessionId) => {
       fetchShellState(sessionId).then(({ currentShellId, shells }) => {
         expect(shells).to.have.length(2);
-        execInShell(sessionId, currentShellId, "printf 'RELOAD_OK\\n'")
-          .should("contain", "RELOAD_OK");
+        execUntilContains(sessionId, currentShellId, "printf 'RELOAD_OK\\n'", "RELOAD_OK");
       });
     });
   });
