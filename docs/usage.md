@@ -16,6 +16,7 @@ The app exposes one web interface on port `1701` and connects to the remote mach
 ```bash
 docker run --rm -p 1701:1701 \
   -e LCARS_SSH_HOST=example-host \
+  -e LCARS_SSH_PORT=22 \
   -e LCARS_SSH_USER=zac \
   -e LCARS_SSH_KEY_PATH=/run/secrets/id_ed25519 \
   -e LCARS_SSH_KNOWN_HOSTS_PATH=/run/secrets/known_hosts \
@@ -37,6 +38,7 @@ services:
       - "1701:1701"
     environment:
       LCARS_SSH_HOST: example-host
+      LCARS_SSH_PORT: 22
       LCARS_SSH_USER: zac
       LCARS_SSH_KEY_PATH: /run/secrets/id_ed25519
       LCARS_SSH_KNOWN_HOSTS_PATH: /run/secrets/known_hosts
@@ -49,6 +51,7 @@ services:
 ## Runtime environment
 
 - `LCARS_SSH_HOST` - required SSH hostname or address
+- `LCARS_SSH_PORT` - optional SSH port, defaults to `22`
 - `LCARS_SSH_USER` - required SSH username
 - `LCARS_SSH_KEY_PATH` - required in-container private key path
 - `LCARS_SSH_KNOWN_HOSTS_PATH` - required in-container `known_hosts` path

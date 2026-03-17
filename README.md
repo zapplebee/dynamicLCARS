@@ -48,6 +48,7 @@ The rest of this README is aimed at developers and coding agents working on the 
 The server expects these environment variables at runtime:
 
 - `LCARS_SSH_HOST`
+- `LCARS_SSH_PORT` (optional, defaults to `22`)
 - `LCARS_SSH_USER`
 - `LCARS_SSH_KEY_PATH`
 - `LCARS_SSH_KNOWN_HOSTS_PATH`
@@ -74,6 +75,7 @@ Run the backend server in a second terminal:
 
 ```bash
 export LCARS_SSH_HOST=example-host
+export LCARS_SSH_PORT=22
 export LCARS_SSH_USER=zac
 export LCARS_SSH_KEY_PATH=/absolute/path/to/id_ed25519
 export LCARS_SSH_KNOWN_HOSTS_PATH=/absolute/path/to/known_hosts
@@ -92,6 +94,32 @@ This produces:
 
 - frontend assets in `dist/`
 - bundled Node server in `dist-server/`
+
+## Bun Binary
+
+There is now an experimental Bun-native server path for shipping the app without Docker.
+
+Build the binary:
+
+```bash
+bun run build:binary
+```
+
+This produces `dist-bin/dynamic-lcars`.
+
+Run it directly:
+
+```bash
+LCARS_SSH_HOST=example-host \
+LCARS_SSH_PORT=22 \
+LCARS_SSH_USER=zac \
+LCARS_SSH_KEY_PATH=/absolute/path/to/id_ed25519 \
+LCARS_SSH_KNOWN_HOSTS_PATH=/absolute/path/to/known_hosts \
+./dist-bin/dynamic-lcars
+```
+
+The compiled server still expects the built frontend assets in `dist/` next to the binary.
+It also expects the host to provide `ssh` and `script` from `util-linux` so it can allocate interactive shell sessions without Docker.
 
 ## Docker image
 

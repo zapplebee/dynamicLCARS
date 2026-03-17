@@ -7,7 +7,7 @@ export BUN_INSTALL=/root/.bun
 export PATH="$BUN_INSTALL/bin:$PATH"
 
 apt-get update >/dev/null
-apt-get install -y --no-install-recommends ca-certificates curl unzip python3 make g++ openssh-client >/dev/null
+apt-get install -y --no-install-recommends ca-certificates curl unzip python3 make g++ openssh-client util-linux >/dev/null
 
 if ! command -v bun >/dev/null 2>&1; then
   curl -fsSL https://bun.sh/install | bash >/dev/null
