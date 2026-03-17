@@ -8,7 +8,8 @@
     "dev:server": "tsx watch server/index.ts",
     "build": "vite build && tsup server/index.ts --format esm --platform node --target node24 --out-dir dist-server --clean",
     "preview": "vite preview",
-    "start": "NODE_ENV=production node dist-server/index.js"
+    "start": "NODE_ENV=production node dist-server/index.js",
+    "test:e2e": "npx cypress run --browser chrome"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.11",

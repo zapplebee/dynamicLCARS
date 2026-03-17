@@ -10,9 +10,41 @@ secrets:
     engine: native
     type: org
 
+services:
+  - name: ssh-fixture
+    image: alpine:latest
+    pull: always
+    entrypoint:
+      - /bin/sh
+      - -c
+      - "until [ -f ${VELA_WORKSPACE}/tests/ci/start-ssh-fixture.sh ]; do sleep 1; done && /bin/sh ${VELA_WORKSPACE}/tests/ci/start-ssh-fixture.sh"
+
+  - name: dynamic-lcars
+    image: node:24-bookworm
+    pull: always
+    entrypoint:
+      - /bin/sh
+      - -c
+      - "until [ -f ${VELA_WORKSPACE}/tests/ci/start-app.sh ]; do sleep 1; done && /bin/sh ${VELA_WORKSPACE}/tests/ci/start-app.sh"
 
 steps:
-  # todo manage any prereqs
+  - name: wait-for-services
+    image: alpine:latest
+    pull: always
+    commands:
+      - apk add --no-cache curl openssh-client
+      - echo "Waiting for ssh-fixture..."
+      - for i in $(seq 1 90); do ssh -i ${VELA_WORKSPACE}/tests/fixtures/ssh/id_ed25519 -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=${VELA_WORKSPACE}/tests/fixtures/ssh/known_hosts lcars@ssh-fixture "printf SSH_READY" 2>/dev/null | grep -q SSH_READY && echo "ssh-fixture ready" && break; [ $i -eq 90 ] && echo "ssh-fixture never ready" && exit 1; sleep 2; done
+      - echo "Waiting for dynamic-lcars..."
+      - for i in $(seq 1 120); do curl -sf http://dynamic-lcars:3002/api/health && echo "dynamic-lcars ready" && break; [ $i -eq 120 ] && echo "dynamic-lcars never ready" && exit 1; sleep 2; done
+
+  - name: cypress
+    image: cypress/included:latest
+    pull: always
+    environment:
+      CYPRESS_BASE_URL: http://dynamic-lcars:3002
+    commands:
+      - cd ${VELA_WORKSPACE} && cypress run --browser chrome
 
   - name: publish-push
     ruleset:
