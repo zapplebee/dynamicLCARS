@@ -32,13 +32,7 @@ steps:
     image: alpine:latest
     pull: always
     commands:
-      - apk add --no-cache curl openssh-client
-      - chmod 600 ${VELA_WORKSPACE}/tests/fixtures/ssh/id_ed25519
-      - chmod 644 ${VELA_WORKSPACE}/tests/fixtures/ssh/known_hosts
-      - echo "Waiting for ssh-fixture..."
-      - for i in $(seq 1 90); do ssh -i ${VELA_WORKSPACE}/tests/fixtures/ssh/id_ed25519 -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=${VELA_WORKSPACE}/tests/fixtures/ssh/known_hosts lcars@ssh-fixture "printf SSH_READY" 2>/dev/null | grep -q SSH_READY && echo "ssh-fixture ready" && break; [ $i -eq 90 ] && echo "ssh-fixture never ready" && exit 1; sleep 2; done
-      - echo "Waiting for dynamic-lcars..."
-      - for i in $(seq 1 120); do curl -sf http://dynamic-lcars:3002/api/health && echo "dynamic-lcars ready" && break; [ $i -eq 120 ] && echo "dynamic-lcars never ready" && exit 1; sleep 2; done
+      - /bin/sh ${VELA_WORKSPACE}/tests/ci/wait-for-services.sh
 
   - name: cypress
     image: cypress/included:latest
