@@ -9,6 +9,10 @@ secrets:
     key: zapplebee/docker_password
     engine: native
     type: org
+  - name: github_token
+    key: zapplebee/github_token
+    engine: native
+    type: org
 
 services:
   - name: ssh-fixture
@@ -66,3 +70,24 @@ steps:
       repo: harbor.prettybird.zapplebee.online/library/dynamic-lcars
       tags:
         - harbor.prettybird.zapplebee.online/library/dynamic-lcars:${VELA_BUILD_TAG##v}
+
+  - name: build-binary-tag
+    ruleset:
+      event: tag
+    image: oven/bun:1
+    pull: always
+    commands:
+      - cd ${VELA_WORKSPACE} && bun install --frozen-lockfile
+      - cd ${VELA_WORKSPACE} && bun run build:binary
+      - cd ${VELA_WORKSPACE} && cp dist-bin/dynamic-lcars dist-bin/dynamic-lcars-linux-x64
+
+  - name: upload-binary-tag
+    ruleset:
+      event: tag
+    image: ghcr.io/cli/cli:latest
+    pull: always
+    secrets:
+      - source: github_token
+        target: GH_TOKEN
+    commands:
+      - cd ${VELA_WORKSPACE} && gh release upload "${VELA_BUILD_TAG}" dist-bin/dynamic-lcars-linux-x64 --clobber --repo "${VELA_REPO_FULL_NAME}"
