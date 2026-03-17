@@ -48,6 +48,7 @@ The rest of this README is aimed at developers and coding agents working on the 
 The server expects these environment variables at runtime:
 
 - `LCARS_SSH_HOST`
+- `LCARS_SSH_PORT` (optional, defaults to `22`)
 - `LCARS_SSH_USER`
 - `LCARS_SSH_KEY_PATH`
 - `LCARS_SSH_KNOWN_HOSTS_PATH`
@@ -74,6 +75,7 @@ Run the backend server in a second terminal:
 
 ```bash
 export LCARS_SSH_HOST=example-host
+export LCARS_SSH_PORT=22
 export LCARS_SSH_USER=zac
 export LCARS_SSH_KEY_PATH=/absolute/path/to/id_ed25519
 export LCARS_SSH_KNOWN_HOSTS_PATH=/absolute/path/to/known_hosts
@@ -109,6 +111,7 @@ Run it directly:
 
 ```bash
 LCARS_SSH_HOST=example-host \
+LCARS_SSH_PORT=22 \
 LCARS_SSH_USER=zac \
 LCARS_SSH_KEY_PATH=/absolute/path/to/id_ed25519 \
 LCARS_SSH_KNOWN_HOSTS_PATH=/absolute/path/to/known_hosts \

@@ -266,7 +266,7 @@ export class TerminalSessionManager {
       return connection;
     }
 
-    const child = spawn("script", ["-qfc", buildSshCommand(this.config, buildRemoteCommand()), "/dev/null"], {
+    const child = spawn("script", ["-E", "never", "-qefc", buildSshCommand(this.config, buildRemoteCommand()), "/dev/null"], {
       cwd: process.cwd(),
       env: process.env,
     });

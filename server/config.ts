@@ -32,6 +32,7 @@ function readNumberEnv(name: string, fallback: number) {
 export type RuntimeConfig = {
   httpPort: number;
   sshHost: string;
+  sshPort: number;
   sshUser: string;
   sshKeyPath: string;
   sshKnownHostsPath: string;
@@ -42,6 +43,7 @@ export function loadConfig(): RuntimeConfig {
   return {
     httpPort: readNumberEnv("LCARS_HTTP_PORT", DEFAULT_HTTP_PORT),
     sshHost: readRequiredEnv("LCARS_SSH_HOST"),
+    sshPort: readNumberEnv("LCARS_SSH_PORT", 22),
     sshUser: readRequiredEnv("LCARS_SSH_USER"),
     sshKeyPath: readRequiredEnv("LCARS_SSH_KEY_PATH"),
     sshKnownHostsPath: readRequiredEnv("LCARS_SSH_KNOWN_HOSTS_PATH"),

@@ -8,6 +8,8 @@ export function buildSshArgs(config: RuntimeConfig, remoteCommand?: string) {
   const args = [
     "-i",
     config.sshKeyPath,
+    "-p",
+    String(config.sshPort),
     "-o",
     "IdentitiesOnly=yes",
     "-o",
