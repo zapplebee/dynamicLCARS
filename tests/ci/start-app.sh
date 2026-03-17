@@ -14,6 +14,8 @@ if ! command -v bun >/dev/null 2>&1; then
 fi
 
 cd "$VELA_WORKSPACE"
+chmod 600 "$VELA_WORKSPACE/tests/fixtures/ssh/id_ed25519"
+chmod 644 "$VELA_WORKSPACE/tests/fixtures/ssh/known_hosts"
 bun install --frozen-lockfile
 bun run build
 

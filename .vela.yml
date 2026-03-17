@@ -33,6 +33,8 @@ steps:
     pull: always
     commands:
       - apk add --no-cache curl openssh-client
+      - chmod 600 ${VELA_WORKSPACE}/tests/fixtures/ssh/id_ed25519
+      - chmod 644 ${VELA_WORKSPACE}/tests/fixtures/ssh/known_hosts
       - echo "Waiting for ssh-fixture..."
       - for i in $(seq 1 90); do ssh -i ${VELA_WORKSPACE}/tests/fixtures/ssh/id_ed25519 -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=${VELA_WORKSPACE}/tests/fixtures/ssh/known_hosts lcars@ssh-fixture "printf SSH_READY" 2>/dev/null | grep -q SSH_READY && echo "ssh-fixture ready" && break; [ $i -eq 90 ] && echo "ssh-fixture never ready" && exit 1; sleep 2; done
       - echo "Waiting for dynamic-lcars..."
