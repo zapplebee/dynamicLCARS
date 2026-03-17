@@ -297,7 +297,7 @@ export class TerminalSessionManager {
     }
 
     for (const request of [...connection.execRequests]) {
-      const markerIndex = connection.buffer.indexOf(request.marker);
+      const markerIndex = connection.buffer.lastIndexOf(request.marker);
 
       if (markerIndex === -1) {
         continue;
